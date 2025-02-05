@@ -1,5 +1,4 @@
 "use client"
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -27,28 +26,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { userSchema, type UserFormValues } from "../schemas/user-schema"
+import { useEffect } from "react"
+import useAreasStore from '@/store/areas.store';
+import useRolesStore from "@/store/roles.store";
+import useSubAreasStore from "@/store/subareas.store"
 
-const areas = [
-  "COMERCIAL",
-  "OPERACIONES",
-  "DESARROLLO DE NUEVOS PROYECTOS",
-  "SGI",
-]
+interface UserFormProps {
+  user?: UserFormValues // Prop para recibir el usuario a editar
+  onSubmit: (data: UserFormValues) => void // Función para manejar el envío del formulario
+}
 
-const subAreas = [
-  "SUBCONTRATOS",
-  "CALIDAD",
-  "OPERACION Y MANTENIMIENTO",
-  "DESARROLLO DE NUEVOS PROYECTOS",
-  "SGI",
-]
-
-const tiposUsuario = ["UNIDAD", "ADMINISTRADOR"]
-
-export function UserForm() {
+export function UserForm({ user, onSubmit }: UserFormProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: {
+    defaultValues: user || {
       nombre: "",
       apellidoPaterno: "",
       apellidoMaterno: "",
@@ -59,19 +50,25 @@ export function UserForm() {
     },
   })
 
-  function onSubmit(data: UserFormValues) {
-    console.log(data)
-    // Aquí iría la lógica para guardar el usuario
-  }
+  // Prellenar el formulario si estamos en modo edición
+  useEffect(() => {
+    if (user) {
+      form.reset(user)
+    }
+  }, [user, form])
+
+  const {areas} = useAreasStore()
+  const {subareas} = useSubAreasStore()
+  const tiposUsuario = useRolesStore((state) => state.roles)
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Agregar Usuario</Button>
+        <Button>{user ? "Editar Usuario" : "Agregar Usuario"}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Registrar Usuarios</DialogTitle>
+          <DialogTitle>{user ? "Editar Usuario" : "Registrar Usuario"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -215,4 +212,3 @@ export function UserForm() {
     </Dialog>
   )
 }
-

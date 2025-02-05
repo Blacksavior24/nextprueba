@@ -27,6 +27,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuthStore } from "@/store/auth.store"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export function NavUser({
   user,
@@ -39,6 +42,14 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
 
+  const {logout, token} = useAuthStore()
+  const router = useRouter()
+
+  const handleLogout = async () =>{
+    await logout();
+    router.push("/")
+  }
+  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -83,14 +94,16 @@ export function NavUser({
                 <BadgeCheck />
                 Cuenta
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <Bell />
                 Notificaciones
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <LogOut />
+              <LogOut
+                onClick={handleLogout} 
+              />
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

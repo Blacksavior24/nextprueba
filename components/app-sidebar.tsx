@@ -20,6 +20,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useAuthStore } from "@/store/auth.store"
+import { useEffect } from "react"
 
 // This is sample data.
 const data = {
@@ -32,64 +34,29 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "Prueba",
-          url: "/dashboard/prueba",
-        },
-        {
-          title: "Cartas Recibidos",
-          url: "/dashboard/recibidas",
-        },
-        {
-          title: "Asignación de Area",
-          url: "/dashboard/asignacion",
-        },
-      ],
+      name: "Cartas Recibidos",
+      url: "/dashboard/recibidas",
+      icon: Users,
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      isActive: true,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      name: "Asignar Area",
+      url: "/dashboard/asignar",
+      icon: Users,
     },
     {
-      title: "Documentación",
-      url: "#",
-      icon: BookOpen,
-      isActive: true,
-      items: [
-        {
-          title: "Introducción",
-          url: "/dashboard/intro",
-        },
-        {
-          title: "Como empezar",
-          url: "/dashboard/iniciar",
-        },
-        {
-          title: "Versión",
-          url: "/dashboard/version",
-        },
-      ],
+      name: "Pendientes",
+      url: "/dashboard/pendientes",
+      icon: Users,
+    },
+    {
+      name: "Emisión de Carta",
+      url: "/dashboard/emision",
+      icon: Users,
+    },
+    {
+      name: "Cargo",
+      url: "/dashboard/cargo",
+      icon: Users,
     },
   ],
   projects: [
@@ -107,13 +74,35 @@ const data = {
       name: "Sub Áreas",
       url: "/dashboard/subareas",
       icon: StickyNote,
-    }
+    },
+    {
+      name: "Temas",
+      url: "/dashboard/temas",
+      icon: StickyNote,
+    },
+    {
+      name: "Roles",
+      url: "/dashboard/roles",
+      icon: StickyNote,
+    },
+    {
+      name: "Empresas",
+      url: "/dashboard/empresas",
+      icon: StickyNote,
+    },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  const { user } = useAuthStore();
+
+
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar 
+      collapsible="icon" 
+      {...props}
+    >
       <SidebarHeader>
         {/* <TeamSwitcher teams={data.teams} /> */}
       </SidebarHeader>
@@ -122,7 +111,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={{
+          name: user?.nombre || 'Usuario',
+          email: user?.email || 'email@mail.com',
+          avatar: "/avatars/shadcn.jpg"
+        }} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

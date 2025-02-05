@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider"
+import { Providers } from "./providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -16,7 +18,12 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Cartas osur",
   description: "Wardev page",
-  authors: []
+  authors: [
+    {
+      url: '',
+      name: 'Emerson Villalta'
+    }
+  ]
 };
 
 export default function RootLayout({
@@ -29,7 +36,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+         <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+             <Providers>
+             {children}
+             </Providers>
+          </ThemeProvider>
       </body>
     </html>
   );

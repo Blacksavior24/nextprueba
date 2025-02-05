@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  ChevronRight,
   Folder,
   Forward,
   MoreHorizontal,
@@ -38,17 +39,18 @@ export function NavProjects({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Gestión</SidebarGroupLabel>
+      <SidebarGroupLabel>GESTIÓN</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
+                <item.icon className="text-blue-600" />
+                <span className="text-sm">{item.name}</span>
+                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-blue-500" />
               </a>
             </SidebarMenuButton>
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
                   <MoreHorizontal />
@@ -61,20 +63,20 @@ export function NavProjects({
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
-                  <Folder className="text-zinc-500 dark:text-zinc-400" />
+                  <Folder className="text-blue-500 dark:text-blue-400" />
                   <span>View Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Forward className="text-zinc-500 dark:text-zinc-400" />
+                  <Forward className="text-blue-500 dark:text-blue-400" />
                   <span>Share Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Trash2 className="text-zinc-500 dark:text-zinc-400" />
+                  <Trash2 className="text-blue-500 dark:text-blue-400" />
                   <span>Delete Project</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </SidebarMenuItem>
         ))}
         {/* <SidebarMenuItem>

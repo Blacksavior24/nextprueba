@@ -1,3 +1,4 @@
+'use client';
 import { AppSidebar } from "@/components/app-sidebar"
 import {
     Breadcrumb,
@@ -11,9 +12,22 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ReactNode } from "react"
+import { useAuthStore } from "@/store/auth.store"
+import { ReactNode, useEffect } from "react"
 
 export default function Page({children}: {children: ReactNode}) {
+
+  const { user, fetchProfile } = useAuthStore()
+
+  useEffect(()=>{
+    if (!user) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetchProfile()
+      }
+    }
+  },[user, fetchProfile])
+
   return (
     <SidebarProvider>
       <AppSidebar />

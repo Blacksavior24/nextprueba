@@ -26,11 +26,8 @@ import {
 } from '@/components/ui/table';
 import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
 import React, { useEffect, useState, useCallback } from 'react';
-import useSubAreasStore from '@/store/subareas.store';
-import useAreasStore from '@/store/areas.store'; // Nuevo store para áreas
+import useRolesStore from '@/store/roles.store';
 import Swal from 'sweetalert2';
-import { SubArea } from '@/app/interfaces/subareas.interfaces';
-import { Area } from '@/app/interfaces/areas.interfaces'; // Interfaz para áreas
 
 const ITEMS_PER_PAGE = 8;
 
@@ -38,78 +35,57 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newSubAreaName, setNewSubAreaName] = useState('');
-  const [newProcedencia, setProcedencia] = useState('');
-  const [newAreaResponsableId, setAreaResponsableId] = useState<number | null>(null);
-  const [newJefatura, setJefatura] = useState('');
-  const [editingSubArea, setEditingSubArea] = useState<SubArea | null>(null);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [editingRole, setEditingRole] = useState<{ id: number; nombre: string } | null>(null);
 
-  const { subareas, loading, isUpdating, error, fetchSubAreas, updateSubArea, deleteSubArea, createSubArea } = useSubAreasStore();
-  const { areas, fetchAreas } = useAreasStore(); // Obtener áreas
+  const { roles, loading, isUpdating, error, fetchRoles, updateRol, deleteRol, createRol } = useRolesStore();
 
   useEffect(() => {
-    fetchSubAreas();
-    fetchAreas(); // Cargar áreas al montar el componente
-  }, [fetchSubAreas, fetchAreas]);
+    fetchRoles();
+  }, [fetchRoles]);
 
-  const filteredSubAreas = subareas.filter((subArea) =>
-    subArea.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredRoles = roles.filter((rol) =>
+    rol.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const totalPages = Math.ceil(filteredSubAreas.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredRoles.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentSubAreas = filteredSubAreas.slice(startIndex, endIndex);
+  const currentRoles = filteredRoles.slice(startIndex, endIndex);
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateSubArea = useCallback(async () => {
-    if (!newSubAreaName || !newAreaResponsableId) {
-      Swal.fire('Error', 'El nombre y el área responsable son requeridos', 'error');
+  const handleCreateOrUpdateRol = useCallback(async () => {
+    if (!newRoleName) {
+      Swal.fire('Error', 'El nombre del rol es requerido', 'error');
       return;
     }
 
     try {
-      if (editingSubArea) {
-        await updateSubArea(editingSubArea.id, { 
-          nombre: newSubAreaName, 
-          procedencia: newProcedencia, 
-          areaResponsableId: newAreaResponsableId, 
-          jefatura: newJefatura 
-        });
-        Swal.fire('¡Éxito!', 'La subárea se actualizó correctamente.', 'success');
+      if (editingRole) {
+        await updateRol(editingRole.id, { nombre: newRoleName });
+        Swal.fire('¡Éxito!', 'El rol se actualizó correctamente.', 'success');
       } else {
-        await createSubArea({ 
-          nombre: newSubAreaName, 
-          procedencia: newProcedencia, 
-          areaResponsableId: newAreaResponsableId, 
-          jefatura: newJefatura 
-        });
-        Swal.fire('¡Éxito!', 'La subárea se creó correctamente.', 'success');
+        await createRol({ nombre: newRoleName });
+        Swal.fire('¡Éxito!', 'El rol se creó correctamente.', 'success');
       }
 
       setIsModalOpen(false); // Cerrar el modal
-      setNewSubAreaName('');
-      setProcedencia('');
-      setAreaResponsableId(null);
-      setJefatura('');
-      setEditingSubArea(null);
-      fetchSubAreas(); // Recargar la lista de subáreas
+      setNewRoleName('');
+      setEditingRole(null);
+      fetchRoles(); // Recargar la lista de roles
     } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar la subárea.', 'error');
+      Swal.fire('Error', 'Hubo un problema al guardar el rol.', 'error');
     }
-  }, [newSubAreaName, newProcedencia, newAreaResponsableId, newJefatura, editingSubArea, updateSubArea, createSubArea, fetchSubAreas]);
+  }, [newRoleName, editingRole, updateRol, createRol, fetchRoles]);
 
-  const handleEditClick = useCallback((subArea: SubArea) => {
-    setEditingSubArea(subArea);
-    setNewSubAreaName(subArea.nombre);
-    setProcedencia(subArea.procedencia || '');
-    setAreaResponsableId(subArea.areaResponsableId);
-    setJefatura(subArea.jefatura || '');
+  const handleEditClick = useCallback((rol: { id: number; nombre: string }) => {
+    setEditingRole(rol);
+    setNewRoleName(rol.nombre);
     setIsModalOpen(true); // Abrir el modal
   }, []);
 
-  const handleDeleteSubArea = useCallback(async (id: number) => {
+  const handleDeleteRol = useCallback(async (id: number) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
       text: '¡No podrás revertir esto!',
@@ -122,26 +98,26 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        await deleteSubArea(id);
-        Swal.fire('¡Eliminado!', 'La subárea ha sido eliminada.', 'success');
-        fetchSubAreas();
+        await deleteRol(id);
+        Swal.fire('¡Eliminado!', 'El rol ha sido eliminado.', 'success');
+        fetchRoles();
       } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar la subárea.', 'error');
+        Swal.fire('Error', 'Hubo un problema al eliminar el rol.', 'error');
       }
     }
-  }, [deleteSubArea, fetchSubAreas]);
+  }, [deleteRol, fetchRoles]);
 
   return (
     <div className="container mx-auto px-10">
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
-            Administración de SubÁreas
+            Administración de Roles
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingSubArea(null); setNewSubAreaName(''); setProcedencia(''); setAreaResponsableId(null); setJefatura(''); setIsModalOpen(true); }}>
-              Agregar SubÁrea
+            <Button onClick={() => { setEditingRole(null); setNewRoleName(''); setIsModalOpen(true); }}>
+              Agregar Rol
             </Button>
 
             <div className="flex items-center gap-2">
@@ -160,33 +136,27 @@ export default function Page() {
         <Table>
           <TableHeader className='bg-zinc-500/30'>
             <TableRow>
-              <TableHead className='font-semibold'>Nombre</TableHead>
-              <TableHead className='font-semibold'>Procedencia</TableHead>
-              <TableHead className='font-semibold'>Área Responsable</TableHead>
-              <TableHead className='font-semibold'>Jefatura</TableHead>
+              <TableHead className='font-semibold text-sm'>Nombre</TableHead>
               <TableHead className="text-right font-semibold">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={2} className="text-center">
                   Cargando...
                 </TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-red-600">
+                <TableCell colSpan={2} className="text-center text-red-600">
                   Error: {error}
                 </TableCell>
               </TableRow>
             ) : (
-              currentSubAreas.map((subArea) => (
-                <TableRow key={subArea.id}>
-                  <TableCell>{subArea.nombre}</TableCell>
-                  <TableCell>{subArea.procedencia}</TableCell>
-                  <TableCell>{subArea.areaResponsable.nombre}</TableCell>
-                  <TableCell>{subArea.jefatura}</TableCell>
+              currentRoles.map((rol) => (
+                <TableRow key={rol.id}>
+                  <TableCell>{rol.nombre}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -197,7 +167,7 @@ export default function Page() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-blue-600"
-                          onClick={() => handleEditClick(subArea)}
+                          onClick={() => handleEditClick(rol)}
                           disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
@@ -205,7 +175,7 @@ export default function Page() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteSubArea(subArea.id)}
+                          onClick={() => handleDeleteRol(rol.id)}
                           disabled={isUpdating}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -225,8 +195,8 @@ export default function Page() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  {editingSubArea ? 'Editar SubÁrea' : 'Agregar Nueva SubÁrea'}
+                <h2 className="text-xl font-semibold dark:text-blue-900">
+                  {editingRole ? 'Editar Rol' : 'Agregar Nuevo Rol'}
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)} // Cerrar el modal
@@ -237,39 +207,19 @@ export default function Page() {
               </div>
               <div className="space-y-4">
                 <Input
-                  placeholder="Nombre de la subárea"
-                  value={newSubAreaName}
-                  onChange={(e) => setNewSubAreaName(e.target.value)}
+                  placeholder="Nombre del rol"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
                 />
-                <Input
-                  placeholder="Procedencia"
-                  value={newProcedencia}
-                  onChange={(e) => setProcedencia(e.target.value)}
-                />
-                <select
-                  value={newAreaResponsableId || ''}
-                  onChange={(e) => setAreaResponsableId(Number(e.target.value))}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="">Seleccione un área responsable</option>
-                  {areas.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.nombre}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  placeholder="Jefatura"
-                  value={newJefatura}
-                  onChange={(e) => setJefatura(e.target.value)}
-                />
-                <Button onClick={handleCreateOrUpdateSubArea} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingSubArea ? 'Guardar Cambios' : 'Guardar'}
+                <Button onClick={handleCreateOrUpdateRol} disabled={isUpdating}>
+                  {isUpdating ? 'Guardando...' : editingRole ? 'Guardar Cambios' : 'Guardar'}
                 </Button>
               </div>
             </div>
           </div>
         )}
+
+
 
         <div className="p-4 border-t">
           <Pagination>
