@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import axios from 'axios';
-import { Usuario, Meta, UsuarioResponse } from '@/app/interfaces/usuarios.interfaces';
+import axios, { AxiosError } from 'axios';
+import { Usuario, Meta, UsuarioResponse } from '@/interfaces/usuarios.interfaces';
 
 // Definir el estado del store
 interface UsuariosState {
@@ -47,7 +47,11 @@ const useUsuariosStore = create<UsuariosState>()((set, get) => ({
             );
             set({ usuarios: response.data.data, meta: response.data.meta, loading: false });
         } catch (error) {
-            set({ error: 'Error fetching usuarios', loading: false });
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });  
+            }else{
+                set({ error: (error as Error).message, loading: false });
+            } 
         }
     },
 
@@ -55,10 +59,29 @@ const useUsuariosStore = create<UsuariosState>()((set, get) => ({
     createUsuario: async (usuario: CreateUsuarioDto) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post<Usuario>('http://localhost:3003/api/v1/users', usuario);
+
+            const {rolId, subAreaId, areaId, ...rest} = usuario
+
+            const payload = {
+                rolId: Number(rolId),
+                subAreaId: Number(subAreaId),
+                areaId: Number(areaId),
+                ...rest
+            }
+            
+            const response = await axios.post<Usuario>('http://localhost:3003/api/v1/users', payload);
+
+           
+            
             set((state) => ({ usuarios: [...state.usuarios, response.data], loading: false }));
         } catch (error) {
-            set({ error: 'Error creating usuario', loading: false });
+
+            
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });  
+            }else{
+                set({ error: (error as Error).message, loading: false });
+            }            
         }
     },
 
@@ -74,8 +97,11 @@ const useUsuariosStore = create<UsuariosState>()((set, get) => ({
                 return { usuarios: updatedUsuarios, isUpdating: false };
             });
         } catch (error) {
-            set({ error: 'Error updating usuario', isUpdating: false });
-            console.error('Error updating usuario:', error);
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });  
+            }else{
+                set({ error: (error as Error).message, loading: false });
+            } 
         }
     },
 
@@ -89,7 +115,11 @@ const useUsuariosStore = create<UsuariosState>()((set, get) => ({
                 loading: false,
             }));
         } catch (error) {
-            set({ error: 'Error deleting usuario', loading: false });
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });  
+            }else{
+                set({ error: (error as Error).message, loading: false });
+            } 
         }
     },
 }));

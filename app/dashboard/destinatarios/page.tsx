@@ -26,9 +26,8 @@ import {
 } from '@/components/ui/table';
 import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
 import React, { useEffect, useState, useCallback } from 'react';
-import useAreasStore from '@/store/areas.store';
 import Swal from 'sweetalert2';
-import { Area } from '@/interfaces/areas.interfaces';
+import useDestinatariosStore from '@/store/destinatarios.store';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -36,72 +35,63 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newAreaName, setNewAreaName] = useState('')
-  const [newProcedencia, setProcedencia] = useState('')
-  const [editingArea, setEditingArea] = useState<Area | null>(null);
+  const [newDestinatarioName, setNewDestinatarioName] = useState('');
+  const [newDestinatarioTipodoc, setNewDestinatarioTipodoc] = useState('');
+  const [newDestinatarioNumdoc, setNewDestinatarioNumdoc] = useState('');
 
-  const { areas, loading, isUpdating, error, fetchAreas, updateArea, deleteArea, createArea } = useAreasStore();
+  const [editingDestinatario, setEditingDestinatario] = useState<{ id: number; nombre: string } | null>(null);
+
+  const { destinatarios, isLoading, isUpdating, error, fetchDestinatarios, updateDestinatario, deleteDestinatario, createDestinatario } = useDestinatariosStore();
 
   useEffect(() => {
-    fetchAreas();
-  }, [fetchAreas]);
+    fetchDestinatarios();
+  }, [fetchDestinatarios, currentPage]);
 
-  const filteredTemas = areas.filter((area) =>
-    area.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredDestinatarios = destinatarios?.filter((dest) =>
+    dest.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const totalPages = Math.ceil(filteredTemas.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredDestinatarios?.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentTemas = filteredTemas.slice(startIndex, endIndex);
+  const currentDestinatarios = filteredDestinatarios?.slice(startIndex, endIndex);
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateArea = useCallback(async () => {
-    if (!newAreaName) {
-      Swal.fire('Error', 'El nombre del area es requerido', 'error');
+  const handleCreateOrUpdateDestinatario = useCallback(async () => {
+    if (!newDestinatarioName) {
+      Swal.fire('Error', 'El nombre del Destinatario es requerido', 'error');
       return;
     }
-
-    try {
-      if (editingArea) {
-        await updateArea(editingArea.id, { nombre: newAreaName, procedencia: newProcedencia });
-        Swal.fire('¡Éxito!', 'El area se actualizó correctamente.', 'success');
+      if (editingDestinatario) {
+        await updateDestinatario(editingDestinatario.id, { nombre: newDestinatarioName, tipodoc: newDestinatarioTipodoc, numdoc: newDestinatarioNumdoc });
+        
       } else {
-        await createArea({ nombre: newAreaName, procedencia: newProcedencia });
-        Swal.fire('¡Éxito!', 'El area se creó correctamente.', 'success');
+        await createDestinatario({ nombre: newDestinatarioName, tipodoc: newDestinatarioTipodoc, numdoc: newDestinatarioNumdoc });
       }
+      if (error) {
+        Swal.fire('Error', error, 'error');
+        return;
+      }      
+
+      Swal.fire('¡Éxito!', editingDestinatario ? 'El destinatario se actualizó correctamente.' : 'El destinatario se creó correctamente.', 'success');
 
       setIsModalOpen(false); // Cerrar el modal
-      setNewAreaName('');
-      setProcedencia('');
-      setEditingArea(null);
-      fetchAreas(); // Recargar la lista de temas
-    } catch (error : unknown) {
-      let errorMessage = 'Hubo un problema al guardar el área.';
+      setNewDestinatarioName('');
+      setNewDestinatarioTipodoc('');
+      setNewDestinatarioNumdoc('');
+      setEditingDestinatario(null);
+      fetchDestinatarios(); // Recargar la lista de Destinatarios
     
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null && "message" in error) {
-        errorMessage = String((error as { message: unknown }).message);
-      }
-    
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: errorMessage
-      });
-    }
-  }, [newAreaName, newProcedencia, editingArea, updateArea, createArea, fetchAreas]);
+  }, [newDestinatarioName, editingDestinatario, updateDestinatario, createDestinatario, fetchDestinatarios]);
 
-  const handleEditClick = useCallback((area: Area) => {
-    setEditingArea(area);
-    setNewAreaName(area.nombre);
-    setProcedencia(area.procedencia)
+  const handleEditClick = useCallback((Destinatario: { id: number; nombre: string }) => {
+    setEditingDestinatario(Destinatario);
+    setNewDestinatarioName(Destinatario.nombre);
     setIsModalOpen(true); // Abrir el modal
   }, []);
 
-  const handleDeleteArea = useCallback(async (id: number) => {
+  const handleDeleteDestinatario = useCallback(async (id: number) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
       text: '¡No podrás revertir esto!',
@@ -114,38 +104,26 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        await deleteArea(id);
-        Swal.fire('¡Eliminado!', 'El area ha sido eliminado.', 'success');
-        fetchAreas();
-      } catch (error: unknown) {
-        let errorMessage = 'Hubo un problema al eliminar el área.';
-    
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null && "message" in error) {
-        errorMessage = String((error as { message: unknown }).message);
-      }
-    
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: errorMessage
-      });
+        await deleteDestinatario(id);
+        Swal.fire('¡Eliminado!', 'El Destinatario ha sido eliminado.', 'success');
+        fetchDestinatarios();
+      } catch (error) {
+        Swal.fire('Error', 'Hubo un problema al eliminar el Destinatario.', 'error');
       }
     }
-  }, [deleteArea, fetchAreas]);
+  }, [deleteDestinatario, fetchDestinatarios]);
 
   return (
     <div className="container mx-auto px-10">
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
-            Administración de Areas
+            Administración de Destinatarios
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingArea(null); setNewAreaName(''); setProcedencia(''); setIsModalOpen(true); }}>
-              Agregar Area
+            <Button onClick={() => { setEditingDestinatario(null); setNewDestinatarioName(''); setIsModalOpen(true); }}>
+              Agregar Destinatario
             </Button>
 
             <div className="flex items-center gap-2">
@@ -165,12 +143,13 @@ export default function Page() {
           <TableHeader className='bg-zinc-500/30'>
             <TableRow>
               <TableHead className='font-semibold'>Nombre</TableHead>
-              <TableHead className='font-semibold'>Procedencia</TableHead>
+              <TableHead className='font-semibold'>Tipo de Documento</TableHead>
+              <TableHead className='font-semibold'>Número de Documento</TableHead>
               <TableHead className="text-right font-semibold">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center">
                   Cargando...
@@ -183,10 +162,11 @@ export default function Page() {
                 </TableCell>
               </TableRow>
             ) : (
-              currentTemas.map((tema) => (
-                <TableRow key={tema.id}>
-                  <TableCell>{tema.nombre}</TableCell>
-                  <TableCell>{tema.procedencia}</TableCell>
+              currentDestinatarios?.map((Destinatario) => (
+                <TableRow key={Destinatario.id}>
+                  <TableCell>{Destinatario.nombre}</TableCell>
+                  <TableCell>{Destinatario.tipodoc}</TableCell>
+                  <TableCell>{Destinatario.numdoc}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -197,7 +177,7 @@ export default function Page() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-blue-600"
-                          onClick={() => handleEditClick(tema)}
+                          onClick={() => handleEditClick(Destinatario)}
                           disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
@@ -205,7 +185,7 @@ export default function Page() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteArea(tema.id)}
+                          onClick={() => handleDeleteDestinatario(Destinatario.id)}
                           disabled={isUpdating}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -226,28 +206,38 @@ export default function Page() {
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">
-                  {editingArea ? 'Editar Area' : 'Agregar Nueva Area'}
+                  {editingDestinatario ? 'Editar Destinatario' : 'Agregar Nuevo Destinatario'}
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)} // Cerrar el modal
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-red-500 hover:text-red-700"
                 >
                   <X className="h-6 w-6" />
                 </button>
               </div>
               <div className="space-y-4">
+              <select
+                  value={newDestinatarioTipodoc || ''}
+                  onChange={(e) => setNewDestinatarioTipodoc(e.target.value)}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">Seleccione un área responsable</option>
+                  <option value="DNI">DNI</option>
+                  <option value="RUC">RUC</option>
+                  <option value="SIN DOCUMENTO">SIN DOCUMENTO</option>
+                </select>
                 <Input
-                  placeholder="Nombre del area"
-                  value={newAreaName}
-                  onChange={(e) => setNewAreaName(e.target.value)}
+                  placeholder="Número de Documento"
+                  value={newDestinatarioNumdoc}
+                  onChange={(e) => setNewDestinatarioNumdoc(e.target.value)}
                 />
                 <Input
-                  placeholder="Procedencia"
-                  value={newProcedencia}
-                  onChange={(e)=> setProcedencia(e.target.value)}
+                  placeholder="Nombre del Destinatario"
+                  value={newDestinatarioName}
+                  onChange={(e) => setNewDestinatarioName(e.target.value)}
                 />
-                <Button onClick={handleCreateOrUpdateArea} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingArea ? 'Guardar Cambios' : 'Guardar'}
+                <Button onClick={handleCreateOrUpdateDestinatario} disabled={isUpdating}>
+                  {isUpdating ? 'Guardando...' : editingDestinatario ? 'Guardar Cambios' : 'Guardar'}
                 </Button>
               </div>
             </div>

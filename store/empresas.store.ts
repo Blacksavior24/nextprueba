@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import axios from 'axios';
-import { Empresa } from '@/app/interfaces/empresas.interfaces';
+import { Empresa } from '@/interfaces/empresas.interfaces';
 
 // Definir el estado del store
 interface EmpresasState {

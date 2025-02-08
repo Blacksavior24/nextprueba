@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import axios from 'axios';
-import { SubArea } from '@/app/interfaces/subareas.interfaces';
+import { SubArea } from '@/interfaces/subareas.interfaces';
 
 // Definir el estado del store
 interface SubAreasState {

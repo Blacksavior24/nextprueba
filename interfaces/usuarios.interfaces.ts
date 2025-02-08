@@ -1,4 +1,6 @@
+import { Area } from "./areas.interfaces";
 import { Rol } from "./roles.interfaces";
+import { SubArea } from "./subareas.interfaces";
 
 export interface Usuario {
     id: string;
@@ -7,6 +9,8 @@ export interface Usuario {
     apellidos: string | null;
     contraseña: string;
     areaId: string | null;
+    area: Area;
+    subArea: SubArea;
     subAreaId: string | null;
     rolId: string;
     rol: Rol;

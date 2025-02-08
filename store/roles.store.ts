@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import axios from 'axios';
-import { Rol } from '@/app/interfaces/roles.interfaces';
+import { Rol } from '@/interfaces/roles.interfaces';
 
 // Definir el estado del store
 interface RolesState {

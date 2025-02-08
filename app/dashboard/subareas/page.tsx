@@ -29,8 +29,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import useSubAreasStore from '@/store/subareas.store';
 import useAreasStore from '@/store/areas.store'; // Nuevo store para áreas
 import Swal from 'sweetalert2';
-import { SubArea } from '@/app/interfaces/subareas.interfaces';
-import { Area } from '@/app/interfaces/areas.interfaces'; // Interfaz para áreas
+import { SubArea } from '@/interfaces/subareas.interfaces';
+import { Area } from '@/interfaces/areas.interfaces'; // Interfaz para áreas
 
 const ITEMS_PER_PAGE = 8;
 
@@ -48,8 +48,8 @@ export default function Page() {
   const { areas, fetchAreas } = useAreasStore(); // Obtener áreas
 
   useEffect(() => {
-    fetchSubAreas();
     fetchAreas(); // Cargar áreas al montar el componente
+    fetchSubAreas();
   }, [fetchSubAreas, fetchAreas]);
 
   const filteredSubAreas = subareas.filter((subArea) =>
@@ -185,7 +185,7 @@ export default function Page() {
                 <TableRow key={subArea.id}>
                   <TableCell>{subArea.nombre}</TableCell>
                   <TableCell>{subArea.procedencia}</TableCell>
-                  <TableCell>{subArea.areaResponsable.nombre}</TableCell>
+                  <TableCell>{subArea.areaResponsable?.nombre}</TableCell>
                   <TableCell>{subArea.jefatura}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

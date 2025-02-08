@@ -28,7 +28,7 @@ import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
 import useUsuariosStore from '@/store/usuarios.store'; // Store para usuarios
 import Swal from 'sweetalert2';
-import { CreateUsuarioDto, Usuario } from '@/app/interfaces/usuarios.interfaces'; // Importar interfaces
+import { CreateUsuarioDto, Usuario } from '@/interfaces/usuarios.interfaces'; // Importar interfaces
 import useAreasStore from '@/store/areas.store';
 import useSubAreasStore from '@/store/subareas.store';
 import useRolesStore from '@/store/roles.store';
@@ -56,12 +56,14 @@ export default function Page() {
 
   const { usuarios, loading, isUpdating, error, fetchUsuarios, updateUsuario, deleteUsuario, createUsuario } = useUsuariosStore();
   const { areas, fetchAreas } = useAreasStore()
+  const { subareas, fetchSubAreas } = useSubAreasStore()
   const { roles, fetchRoles } = useRolesStore()
 
   useEffect(() => {
-    fetchUsuarios(currentPage, ITEMS_PER_PAGE);
     fetchRoles();
+    fetchUsuarios(currentPage, ITEMS_PER_PAGE);
     fetchAreas();
+    fetchSubAreas();
   }, [fetchUsuarios, currentPage]);
 
   const filteredUsuarios = usuarios.filter((usuario) =>
@@ -76,19 +78,22 @@ export default function Page() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   const handleCreateOrUpdateUsuario = useCallback(async () => {
-    if (!newUsuario.nombre || !newUsuario.email || !newUsuario.contraseña || !newUsuario.rolId) {
-      Swal.fire('Error', 'Nombre, email, contraseña y rol son requeridos', 'error');
+    if (!newUsuario.nombre || !newUsuario.email || !newUsuario.contraseña || !newUsuario.rolId || !newUsuario.areaId || !newUsuario.subAreaId) {
+      Swal.fire('Error', 'Nombre, email, contraseña, area, subarea y rol son requeridos', 'error');
       return;
     }
-
-    try {
       if (editingUsuario) {
         await updateUsuario(editingUsuario.id, newUsuario);
-        Swal.fire('¡Éxito!', 'El usuario se actualizó correctamente.', 'success');
       } else {
         await createUsuario(newUsuario);
-        Swal.fire('¡Éxito!', 'El usuario se creó correctamente.', 'success');
       }
+
+      if (error) {
+        Swal.fire('Error', error, 'error');
+        return;
+    }
+    // Solo mostramos éxito si no hay errores
+    Swal.fire('¡Éxito!', editingUsuario ? 'El usuario se actualizó correctamente.' : 'El usuario se creó correctamente.', 'success');
 
       setIsModalOpen(false);
       setNewUsuario({
@@ -106,9 +111,7 @@ export default function Page() {
       });
       setEditingUsuario(null);
       fetchUsuarios(currentPage, ITEMS_PER_PAGE);
-    } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar el usuario.', 'error');
-    }
+    
   }, [newUsuario, editingUsuario, updateUsuario, createUsuario, fetchUsuarios, currentPage]);
 
   const handleEditClick = useCallback((usuario: Usuario) => {
@@ -138,16 +141,20 @@ export default function Page() {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Sí, eliminar',
-    });
+    })
 
     if (result.isConfirmed) {
-      try {
+      
         await deleteUsuario(id);
+        
+        if (error) {
+          Swal.fire('Error', error, 'error');
+          return;
+        }
+
         Swal.fire('¡Eliminado!', 'El usuario ha sido eliminado.', 'success');
         fetchUsuarios(currentPage, ITEMS_PER_PAGE);
-      } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar el usuario.', 'error');
-      }
+      
     }
   }, [deleteUsuario, fetchUsuarios, currentPage]);
 
@@ -196,6 +203,8 @@ export default function Page() {
               <TableHead className='font-semibold'>Nombre</TableHead>
               <TableHead className='font-semibold'>Email</TableHead>
               <TableHead className='font-semibold'>Rol</TableHead>
+              <TableHead className='font-semibold'>Area</TableHead>
+              <TableHead className='font-semibold'>Sub-Area</TableHead>
               <TableHead className='font-semibold'>Tipo de Usuario</TableHead>
               <TableHead className='font-semibold'>Jefatura</TableHead>
               <TableHead className="text-right font-semibolds">Acciones</TableHead>
@@ -219,7 +228,9 @@ export default function Page() {
                 <TableRow key={usuario.id}>
                   <TableCell>{usuario.nombre}</TableCell>
                   <TableCell>{usuario.email}</TableCell>
-                  <TableCell>{usuario.rol.nombre}</TableCell>
+                  <TableCell>{usuario.rol?.nombre}</TableCell>
+                  <TableCell>{usuario.area?.nombre}</TableCell>
+                  <TableCell>{usuario.subArea?.nombre}</TableCell>
                   <TableCell>{usuario.tipoUsuario}</TableCell>
                   <TableCell>{usuario.jefe}</TableCell>
                   <TableCell className="text-right">
@@ -293,6 +304,36 @@ export default function Page() {
                     value={newUsuario.contraseña}
                     onChange={(e) => setNewUsuario({ ...newUsuario, contraseña: e.target.value })}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Area</label>
+                  <select
+                    value={newUsuario.areaId || ''}
+                    onChange={(e) => setNewUsuario({ ...newUsuario, areaId: e.target.value })}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="">Seleccione un Area</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {area.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sub Areas</label>
+                  <select
+                    value={newUsuario.subAreaId || ''}
+                    onChange={(e) => setNewUsuario({ ...newUsuario, subAreaId: e.target.value })}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="">Seleccione una Sub Area</option>
+                    {subareas.filter((subareas)=>String(subareas.areaResponsableId) === newUsuario.areaId).map((subarea) => (
+                      <option key={subarea.id} value={subarea.id}>
+                        {subarea.nombre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Rol</label>

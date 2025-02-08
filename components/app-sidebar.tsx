@@ -8,6 +8,17 @@ import {
   Users,
   StickyNote,
   SquareTerminal,
+  CheckCheck,
+  Factory,
+  Key,
+  Group,
+  Ungroup,
+  FileInput,
+  FileUp,
+  FileUser,
+  FilePen,
+  FileCheck,
+  FolderTree,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -34,29 +45,24 @@ const data = {
   ],
   navMain: [
     {
-      name: "Cartas Recibidos",
-      url: "/dashboard/recibidas",
-      icon: Users,
+      name: "Cartas",
+      url: "/dashboard/cartas",
+      icon: FolderTree
     },
     {
       name: "Asignar Area",
       url: "/dashboard/asignar",
-      icon: Users,
+      icon: FileUp,
     },
     {
       name: "Pendientes",
       url: "/dashboard/pendientes",
-      icon: Users,
-    },
-    {
-      name: "Emisión de Carta",
-      url: "/dashboard/emision",
-      icon: Users,
+      icon: FileUser,
     },
     {
       name: "Cargo",
       url: "/dashboard/cargo",
-      icon: Users,
+      icon: FileCheck,
     },
   ],
   projects: [
@@ -68,12 +74,12 @@ const data = {
     {
       name: "Áreas",
       url: "/dashboard/areas",
-      icon: Package,
+      icon: Group,
     },
     {
       name: "Sub Áreas",
       url: "/dashboard/subareas",
-      icon: StickyNote,
+      icon: Ungroup,
     },
     {
       name: "Temas",
@@ -83,13 +89,18 @@ const data = {
     {
       name: "Roles",
       url: "/dashboard/roles",
-      icon: StickyNote,
+      icon: Key,
     },
     {
       name: "Empresas",
       url: "/dashboard/empresas",
-      icon: StickyNote,
+      icon: Factory,
     },
+    {
+      name: "Destinatarios",
+      url: "/dashboard/destinatarios",
+      icon: CheckCheck
+    }
   ],
 }
 

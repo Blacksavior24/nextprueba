@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import axios from 'axios';
-import { Area } from '@/app/interfaces/areas.interfaces';
+import { Area } from '@/interfaces/areas.interfaces';
 
 // Definir el estado del store
 interface AreasState {

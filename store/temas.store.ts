@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import axios from 'axios';
-import { Tema } from '@/app/interfaces/temas.interfaces';
+import { Tema } from '@/interfaces/temas.interfaces';
 
 // Definir el estado del store
 interface TemasState {

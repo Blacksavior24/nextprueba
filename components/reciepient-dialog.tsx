@@ -5,29 +5,44 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import useDestinatariosStore from "@/store/destinatarios.store"
 
 interface RecipientDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (data: { tipo: string; numero: string; nombre: string }) => void
 }
 
-export function RecipientDialog({ open, onOpenChange, onSave }: RecipientDialogProps) {
+export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
+
+  const { isLoading, error, createDestinatario } = useDestinatariosStore()
+
   const [formData, setFormData] = useState({
-    tipo: "",
-    numero: "",
+    tipodoc: "",
+    numdoc: "",
     nombre: "",
   })
 
+  const handleSubmit = async() => {
+    await createDestinatario(formData)
+    if (!error) {
+    setFormData({
+      tipodoc: '',
+      nombre: '',
+      numdoc: ''
+    })
+    }
+  }
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" aria-describedby="Destinatarios form">
         <DialogHeader>
           <DialogTitle>Administración de Destinatario</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+            <Select value={formData.tipodoc} onValueChange={(value) => setFormData({ ...formData, tipodoc: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="--Seleccionar--" />
               </SelectTrigger>
@@ -42,8 +57,8 @@ export function RecipientDialog({ open, onOpenChange, onSave }: RecipientDialogP
           <div className="grid gap-2">
             <Input
               placeholder="Numero Documento"
-              value={formData.numero}
-              onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+              value={formData.numdoc}
+              onChange={(e) => setFormData({ ...formData, numdoc: e.target.value })}
             />
           </div>
           <div className="grid gap-2">
@@ -53,9 +68,16 @@ export function RecipientDialog({ open, onOpenChange, onSave }: RecipientDialogP
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
             />
           </div>
+          {error && 
+              <div className='bg-red-500 p-3 rounded-lg '>
+                <p className="text-red-50 text-sm text-center font-bold">
+                  {error}
+                </p>
+              </div>
+              }
           <Button
             onClick={() => {
-              onSave(formData)
+              handleSubmit()
               onOpenChange(false)
             }}
           >

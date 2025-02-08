@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Plus } from "lucide-react"
@@ -16,10 +16,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { RecipientDialog } from "@/components/reciepient-dialog";
 import { receivedLetterSchema, type ReceivedLetterForm } from "@/schemas/received-letter-schema"
+import useDestinatariosStore from "@/store/destinatarios.store"
+import { useCreateReceivedCardMutation } from "@/lib/queries/cards.queries"
 
 export default function Page() {
   const [recipientDialogOpen, setRecipientDialogOpen] = useState(false)
-  const [recipients, setRecipients] = useState<Array<{ nombre: string; id: string }>>([])
+  const { destinatarios, fetchDestinatarios } = useDestinatariosStore()
 
   const form = useForm<ReceivedLetterForm>({
     resolver: zodResolver(receivedLetterSchema),
@@ -28,13 +30,21 @@ export default function Page() {
     },
   })
 
+  const { mutate :  createReceivedCard } = useCreateReceivedCardMutation(form.reset)
+
+  
+  useEffect(() => {
+    fetchDestinatarios()
+  }, [fetchDestinatarios])
+  
+
   function onSubmit(data: ReceivedLetterForm) {
-    console.log(data)
+    createReceivedCard(data)
   }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold text-center mb-6">Cartas Recibidas</h1>
+      <h1 className="text-2xl font-semibold text-center mb-6">Carta</h1>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -96,8 +106,8 @@ export default function Page() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="default">--Seleccionar--</SelectItem> {/* Changed default value */}
-                      {recipients.map((recipient) => (
-                        <SelectItem key={recipient.id} value={recipient.id}>
+                      {destinatarios?.map((recipient) => (
+                        <SelectItem key={recipient.id} value={recipient.nombre}>
                           {recipient.nombre}
                         </SelectItem>
                       ))}
@@ -120,7 +130,7 @@ export default function Page() {
 
           <FormField
             control={form.control}
-            name="asuntoRecibido"
+            name="asunto"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Asunto Recibido:</FormLabel>
@@ -134,7 +144,7 @@ export default function Page() {
 
           <FormField
             control={form.control}
-            name="cartaRecibida"
+            name="pdfInfo"
             render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
                 <FormLabel>Carta Recibida:</FormLabel>
@@ -173,9 +183,6 @@ export default function Page() {
       <RecipientDialog
         open={recipientDialogOpen}
         onOpenChange={setRecipientDialogOpen}
-        onSave={(data) => {
-          setRecipients([...recipients, { id: Math.random().toString(), nombre: data.nombre }])
-        }}
       />
     </div>
   )

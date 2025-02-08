@@ -47,7 +47,7 @@ export function LetterForm() {
   })
 
   function onSubmit(data: LetterFormValues) {
-    console.log(data)
+    
   }
 
   const handleAddRecipient = (name: string) => {
