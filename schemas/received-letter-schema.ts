@@ -1,13 +1,13 @@
 import * as z from "zod"
 
 export const receivedLetterSchema = z.object({
-  codigoRecibido: z.string().min(1, "El código es requerido").optional(),
+  codigoRecibido: z.string().min(1, "El código es requerido"),
   fechaIngreso: z.date({
     required_error: "La fecha de ingreso es requerida",
-  }).optional(),
-  destinatario: z.string().min(1, "El destinatario es requerido").optional(),
-  asunto: z.string().min(1, "El asunto es requerido").optional(),
-  pdfInfo: z.instanceof(File, { message: "El archivo es requerido" }).optional(),
+  }),
+  destinatario: z.string().min(1, "El destinatario es requerido"),
+  asunto: z.string().min(1, "El asunto es requerido"),
+  pdfInfo: z.instanceof(File, { message: "El archivo es requerido" }),
   esConfidencial: z.boolean().default(false),
   vencimiento: z.boolean().default(false),
   informativo: z.boolean().default(false),

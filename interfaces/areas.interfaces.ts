@@ -6,3 +6,8 @@ export interface Area{
     procedencia: string;
     subAreas: SubArea[]
 }
+
+export interface CreateAreaDto {
+    nombre: string;
+    procedencia: string;
+}

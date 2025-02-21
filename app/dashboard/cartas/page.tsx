@@ -45,10 +45,10 @@ export default function Page() {
                     </h2>
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex">
-                        <Button>
+                        <Button onClick={() => refetch()}>
                             <RefreshCcw />
                         </Button>
-                        <Button>
+                        <Button onClick={()=>setOpenEdit(true)}>
                             <PlusSquare />
                             Crear Carta
                         </Button>
@@ -59,7 +59,8 @@ export default function Page() {
                                 type="search"
                                 placeholder="Buscar..."
                                 className="max-w-sm"
-
+                                value={searchTerm}
+                                onChange={e=>setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
@@ -98,9 +99,14 @@ export default function Page() {
                                     <TableCell>{card.asunto}</TableCell>
                                     <TableCell>{card.fechaIngreso.toString()}</TableCell>
                                     <TableCell>
-                                        <Button asChild >
+                                        <Button 
+                                            asChild 
+                                            variant="outline"
+                                            className="hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                                        >
                                             <a href={card.pdfInfo} target="_blank" rel="noopener noreferrer">
-                                                <FolderDown />
+                                                <FolderDown className="mr-2 h-4 w-4" />
+                                                Ver Pdf
                                             </a>
                                         </Button>
                                     </TableCell>
@@ -116,15 +122,15 @@ export default function Page() {
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem
                                                     className="text-blue-600"
-                                                    onClick={() => { }}
+                                                    onClick={() => { setOpenEdit(true); setSelect(card.id) }}
                                                 >
                                                     <Pencil className="mr-2 h-4 w-4" />
                                                     Actualizar
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-red-600"
-                                                //onClick={() => handleDeleteEmpresa(empresa.id)}
-                                                //disabled={isUpdating}
+                                                    //onClick={() => handleDeleteEmpresa(empresa.id)}
+                                                    //disabled={isUpdating}
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     Eliminar

@@ -9,3 +9,10 @@ export interface SubArea {
     creadoPorId: number;
     areaResponsable: Area
 }
+
+export interface CreateSubAreaDto {
+    nombre: string;
+    procedencia?: string;
+    areaResponsableId: number;
+    jefatura?: string;
+}

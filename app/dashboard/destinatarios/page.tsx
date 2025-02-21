@@ -43,6 +43,8 @@ export default function Page() {
 
   const { destinatarios, isLoading, isUpdating, error, fetchDestinatarios, updateDestinatario, deleteDestinatario, createDestinatario } = useDestinatariosStore();
 
+
+  
   useEffect(() => {
     fetchDestinatarios();
   }, [fetchDestinatarios, currentPage]);
@@ -108,7 +110,7 @@ export default function Page() {
         Swal.fire('¡Eliminado!', 'El Destinatario ha sido eliminado.', 'success');
         fetchDestinatarios();
       } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar el Destinatario.', 'error');
+        Swal.fire('Error', `Hubo un problema al eliminar el Destinatario. ${error}`, 'error');
       }
     }
   }, [deleteDestinatario, fetchDestinatarios]);

@@ -4,3 +4,7 @@ export interface Empresa {
     nombre: string;
     creadoPorId: number;
 }
+
+export interface CreateEmpresaDto {
+    nombre: string;
+}

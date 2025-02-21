@@ -1,6 +1,7 @@
 import { createUser, deleteUser, getUserById, getUsers, updateUser } from "@/actions/users.action"
 import { CreateUsuarioDto } from "@/interfaces/usuarios.interfaces";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import Swal from "sweetalert2";
 
 export const useUsers = () =>{
     return useQuery({
@@ -27,8 +28,13 @@ export const useUser = (id: string) => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["users"] }); // Refresca la lista
       },
-      onError(error: Error) {
-                  
+      onError(error: string) {
+          Swal.fire({
+                  title: "Error",
+                  text: `Ocurrió un error al crear el usuario: ${error}`,
+                  icon: "error",
+                  confirmButtonText: "Aceptar",
+                })
       },
     });
   };

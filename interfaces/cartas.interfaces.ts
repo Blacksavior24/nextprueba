@@ -3,6 +3,27 @@ import { Empresa } from "./empresas.interfaces";
 import { SubArea } from "./subareas.interfaces";
 import { Tema } from "./temas.interfaces";
 
+export interface CreateCardDto {
+  codigoRecibido: string; // string, opcional
+  fechaIngreso: Date; // Date, opcional
+  destinatario: string; // string, opcional
+  asunto: string; // string, opcional
+  pdfInfo?: string; // File, opcional
+  esConfidencial: boolean; // boolean, valor por defecto false
+  vencimiento: boolean; // boolean, valor por defecto false
+  informativo: boolean; // boolean, valor por defecto false
+  urgente: boolean; // boolean, valor por defecto false
+  correosCopia?: string; // string (correo electrónico), opcional
+  temaId: string; // string
+  areaResponsableId: string; // string
+  subAreaId: string; // string
+  empresaId: string; // string
+  referencia?: string; // string, opcional
+  resumenRecibido?: string; // string, opcional
+  nivelImpacto?: string; // string, opcional
+  fechadevencimiento: Date; // Date, requerida
+}
+
 export interface ReceivedCardDto {
   pdfInfo: string;
   codigoRecibido: string;

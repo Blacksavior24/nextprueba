@@ -1,6 +1,7 @@
 import { AssignedCardDto, AssignmentCardDto, Card, PendingCardDto, ReceivedCardDto } from "@/interfaces/cartas.interfaces"
 import { formsApi } from "@/lib/axios"
 import { AxiosError } from "axios"
+import { parseISO } from "date-fns"
 
 const uploadFile = async (file: any) => {
     try {
@@ -20,7 +21,7 @@ const uploadFile = async (file: any) => {
     }
   }
 
-export const createReceivedCard = async(receivedCardDto: ReceivedCardDto) => {
+export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omit<ReceivedCardDto, 'pdfInfo'>) => {
     try {
         console.log("que esta llegando tmre", receivedCardDto)
 
@@ -37,11 +38,11 @@ export const createReceivedCard = async(receivedCardDto: ReceivedCardDto) => {
         const response = await formsApi.post('cards/received', payload)
         return response.data
     } catch (error) {
-        if (error instanceof AxiosError && error.response) {
-            return error.response.data.message
-        } else {
-            return (error as Error).message
-        }
+      if (error instanceof AxiosError && error.response) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error((error as Error).message)
+      } 
     }
 }
 
@@ -50,11 +51,11 @@ export const assignCard = async (id: string, assignedCardDto: AssignedCardDto)=>
         const response = await formsApi.patch(`cards/assigned/${id}`, assignedCardDto)
         return response.data
     } catch (error) {
-        if (error instanceof AxiosError && error.response) {
-            return error.response.data.message
-        } else {
-            return (error as Error).message
-        }
+      if (error instanceof AxiosError && error.response) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error((error as Error).message)
+      } 
     }
 }
 
@@ -64,10 +65,10 @@ export const markCardAsPending = async (id: string, pendingCardDto: PendingCardD
     return response.data
   } catch (error) {
     if (error instanceof AxiosError && error.response) {
-      return error.response.data.message
+      throw new Error(error.response.data.message)
     } else {
-      return (error as Error).message
-    }
+      throw new Error((error as Error).message)
+    } 
   }
 }
 
@@ -77,10 +78,10 @@ export const changeCardAssignment = async (id: string, assignmentCardDto: Assign
       return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
-        return error.response.data.message
+        throw new Error(error.response.data.message)
       } else {
-        return (error as Error).message
-      }
+        throw new Error((error as Error).message)
+      } 
     }
 }
 
@@ -94,11 +95,11 @@ export const getCards = async () => {
         }))
         return links
     } catch (error) {
-        if (error instanceof AxiosError && error.response) {
-            return error.response.data.message
-          } else {
-            return (error as Error).message
-          } 
+      if (error instanceof AxiosError && error.response) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error((error as Error).message)
+      } 
     }
 }
 
@@ -106,22 +107,25 @@ export const getCardById = async (id:string) => {
   try {
       const response = await formsApi.get<Card>(`cards/${id}`)
       console.log("cartas", response.data)
-      const {pdfInfo, ...rest} = response.data
+      const {pdfInfo, fechaIngreso,...rest} = response.data
 
       let link = pdfInfo ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${pdfInfo}` : ''
 
+      let formatFechaIngreso = parseISO(fechaIngreso)
+
       const payload = {
         ...rest,
+        fechaIngreso: formatFechaIngreso,
         pdfInfo: link
       }
-
+      console.log('payload', payload)
 
       return payload
   } catch (error) {
       if (error instanceof AxiosError && error.response) {
-          return error.response.data.message
+          throw new Error(error.response.data.message)
         } else {
-          return (error as Error).message
+          throw new Error((error as Error).message)
         } 
   }
 }
@@ -135,10 +139,10 @@ export const getCardsEmitidos = async () => {
       }))
       return links
   } catch (error) {
-      if (error instanceof AxiosError && error.response) {
-          return error.response.data.message
-        } else {
-          return (error as Error).message
-        } 
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error((error as Error).message)
+    } 
   }
 }

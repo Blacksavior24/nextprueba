@@ -61,22 +61,22 @@ export default function Page() {
       return;
     }
 
-    try {
       if (editingEmpresa) {
         await updateEmpresa(editingEmpresa.id, { nombre: newEmpresaName });
-        Swal.fire('¡Éxito!', 'El empresa se actualizó correctamente.', 'success');
       } else {
         await createEmpresa({ nombre: newEmpresaName });
-        Swal.fire('¡Éxito!', 'El empresa se creó correctamente.', 'success');
       }
+
+      if (error) {
+        Swal.fire('Error', `Hubo un problema al guardar el empresa. ${error}`, 'error');
+      }
+
+      Swal.fire('¡Éxito!', editingEmpresa? 'El empresa se actualizó correctamente.':'El empresa se creó correctamente.', 'success');
 
       setIsModalOpen(false); // Cerrar el modal
       setNewEmpresaName('');
       setEditingEmpresa(null);
       fetchEmpresas(); // Recargar la lista de Empresas
-    } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar el empresa.', 'error');
-    }
   }, [newEmpresaName, editingEmpresa, updateEmpresa, createEmpresa, fetchEmpresas]);
 
   const handleEditClick = useCallback((empresa: { id: number; nombre: string }) => {

@@ -2,7 +2,6 @@
 
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
   LogOut,
 } from "lucide-react"
@@ -29,7 +28,6 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/auth.store"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 
 export function NavUser({
   user,
@@ -42,7 +40,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
 
-  const {logout, token} = useAuthStore()
+  const {logout} = useAuthStore()
   const router = useRouter()
 
   const handleLogout = async () =>{

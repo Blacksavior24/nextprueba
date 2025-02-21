@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import useDestinatariosStore from "@/store/destinatarios.store"
 
@@ -14,7 +14,7 @@ interface RecipientDialogProps {
 
 export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
 
-  const { isLoading, error, createDestinatario } = useDestinatariosStore()
+  const { error, createDestinatario } = useDestinatariosStore()
 
   const [formData, setFormData] = useState({
     tipodoc: "",
@@ -36,11 +36,14 @@ export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" aria-describedby="Destinatarios form">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Administración de Destinatario</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <DialogDescription>
+          
+        </DialogDescription>
+        <div className="grid gap-4 py-4" >
           <div className="grid gap-2">
             <Select value={formData.tipodoc} onValueChange={(value) => setFormData({ ...formData, tipodoc: value })}>
               <SelectTrigger>
