@@ -34,7 +34,7 @@ export interface ReceivedCardDto {
 }
 
 export interface AssignedCardDto {
-  
+
   estado?: string;
   referencia?: string;
   resumenRecibido: string;
@@ -61,52 +61,59 @@ export interface PendingCardDto {
 
 export interface AssignmentCardDto {
 
-    cartaborrador?: string;
-    codigoEnviado: string;
-    fechaEnvio: string;
-    asuntoEnviado: string;
-    resumenEnviado: string;
+  cartaborrador?: string;
+  codigoEnviado: string;
+  fechaEnvio: string;
+  asuntoEnviado: string;
+  resumenEnviado: string;
 
-    cartaEnviada?: string;
+  cartaEnviada?: string;
 
-    comentarioCargo?: string;
+  comentarioCargo?: string;
 }
 
 export interface Card {
-  id:                 string;
-  pdfInfo:            string;
-  codigoRecibido:     string;
-  fechaIngreso:       string;
-  destinatario:       string;
-  asunto:             string;
-  esConfidencial:     boolean;
-  devuelto:           boolean;
-  estado:             string;
-  referencia:         string;
-  resumenRecibido:    string;
-  tema:               string;
-  nivelImpacto:       string;
-  correosCopia:       string[];
-  areaResponsableId:  number;
-  subAreaId:          number;
-  empresaId:          number;
-  temaId:             number;
-  vencimiento:        boolean;
+  id: string;
+  pdfInfo: string;
+  codigoRecibido: string;
+  fechaIngreso: string;
+  destinatario: string;
+  asunto: string;
+  esConfidencial: boolean;
+  devuelto: boolean;
+  estado: string;
+  resumenRecibido: string;
+  tema: string;
+  nivelImpacto: string;
+  correosCopia: string[];
+  areaResponsableId: number;
+  subAreaId: number;
+  empresaId: number;
+  temaId: number;
+  vencimiento: boolean;
   fechadevencimiento: string;
-  informativo:        boolean;
-  urgente:            boolean;
-  cartaborrador:      string;
-  comentario:         string;
-  observaciones:      string;
-  codigoenviado:      string;
-  fechaEnvio:         string;
-  asuntoEnviado:      string;
-  resumenEnviado:     string;
-  cartaEnviada:       string;
-  comentarioCargo:    string;
-  areaResponsable:    Area;
-  subArea:            SubArea;
-  empresa:            Empresa;
-  temaRelacion:       Tema;
+  informativo: boolean;
+  urgente: boolean;
+  cartaborrador: string;
+  comentario: string;
+  observaciones: string;
+  codigoenviado: string;
+  fechaEnvio: string;
+  asuntoEnviado: string;
+  resumenEnviado: string;
+  cartaEnviada: string;
+  comentarioCargo: string;
+  areaResponsable: Area;
+  subArea: SubArea;
+  empresa: Empresa;
+  temaRelacion: Tema;
+  referencia?: number;
+  cartaAnterior?: Card;
+  respuestas: Card[];
+  tipo: type;
 }
 
+enum type {
+  Recibido = "Recibido",
+  Enviado = "Enviado"
+}

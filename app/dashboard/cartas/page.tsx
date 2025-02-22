@@ -1,6 +1,7 @@
 "use client"
 
 import { AssignForm } from "@/components/Asignar-form"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -35,6 +36,18 @@ export default function Page() {
 
     const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+    const getStatusColor = (estado: string) => {
+        switch (estado.toLowerCase()) {
+            case "ingresado":
+                return "bg-green-100 text-green-800 border-green-300"
+            case "pendiente":
+                return "bg-yellow-100 text-yellow-800 border-yellow-300"
+            case "inactivo":
+                return "bg-red-100 text-red-800 border-red-300"
+            default:
+                return "bg-gray-100 text-gray-800 border-gray-300"
+        }
+    }
 
     return (
         <div className="container mx-auto px-10">
@@ -45,13 +58,13 @@ export default function Page() {
                     </h2>
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex">
-                        <Button onClick={() => refetch()}>
-                            <RefreshCcw />
-                        </Button>
-                        <Button onClick={()=>setOpenEdit(true)}>
-                            <PlusSquare />
-                            Crear Carta
-                        </Button>
+                            <Button onClick={() => refetch()}>
+                                <RefreshCcw />
+                            </Button>
+                            <Button onClick={() => setOpenEdit(true)}>
+                                <PlusSquare />
+                                Crear Carta
+                            </Button>
                         </div>
                         <div className="flex items-center gap-2">
                             <span>Buscar:</span>
@@ -60,7 +73,7 @@ export default function Page() {
                                 placeholder="Buscar..."
                                 className="max-w-sm"
                                 value={searchTerm}
-                                onChange={e=>setSearchTerm(e.target.value)}
+                                onChange={e => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
@@ -99,8 +112,8 @@ export default function Page() {
                                     <TableCell>{card.asunto}</TableCell>
                                     <TableCell>{card.fechaIngreso.toString()}</TableCell>
                                     <TableCell>
-                                        <Button 
-                                            asChild 
+                                        <Button
+                                            asChild
                                             variant="outline"
                                             className="hover:bg-blue-100 hover:text-blue-600 transition-colors"
                                         >
@@ -110,8 +123,13 @@ export default function Page() {
                                             </a>
                                         </Button>
                                     </TableCell>
-                                    <TableCell>{card.devuelto ? 'SI' : 'NO'}</TableCell>
-                                    <TableCell>{card.estado}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={card.devuelto ? "default" : "secondary"}>{card.devuelto ? "SI" : "NO"}</Badge></TableCell>
+                                    <TableCell>
+                                        <Badge className={`${getStatusColor(card.estado)} px-2 py-1 rounded-full text-xs font-semibold`}>
+                                            {card.estado}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -129,8 +147,8 @@ export default function Page() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-red-600"
-                                                    //onClick={() => handleDeleteEmpresa(empresa.id)}
-                                                    //disabled={isUpdating}
+                                                //onClick={() => handleDeleteEmpresa(empresa.id)}
+                                                //disabled={isUpdating}
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     Eliminar

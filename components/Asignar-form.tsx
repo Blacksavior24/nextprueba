@@ -24,6 +24,7 @@ import useAreasStore from "@/store/areas.store"
 import useSubAreasStore from "@/store/subareas.store"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
 import { ScrollArea } from "./ui/scroll-area"
+import { Switch } from "./ui/switch"
 
 interface DialogProps {
     open: boolean
@@ -241,6 +242,20 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
                                             <FormLabel>Marcar solo en caso sera confidencial</FormLabel>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="tipo"
+                                render={({field}) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>{field.value? 'Recibido':'Respondido'}</FormLabel>
                                         </div>
                                     </FormItem>
                                 )}

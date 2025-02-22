@@ -12,6 +12,7 @@ export const receivedLetterSchema = z.object({
   vencimiento: z.boolean().default(false),
   informativo: z.boolean().default(false),
   urgente: z.boolean().default(false),
+  tipo: z.boolean().default(false),
   correosCopia: z
     .string()
     .regex(
