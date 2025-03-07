@@ -1,12 +1,11 @@
 'use client'
 
-import { useCreateReceivedCardMutation, useGetCardById } from "@/lib/queries/cards.queries"
+import { useCreateReceivedCardMutation, useGetCardById, useGetCards } from "@/lib/queries/cards.queries"
 import { ReceivedLetterForm, receivedLetterSchema } from "@/schemas/received-letter-schema"
-import useDestinatariosStore from "@/store/destinatarios.store"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,17 +13,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CalendarIcon, FolderDown, Plus } from "lucide-react"
+import { CalendarIcon, FolderDown, LoaderCircle, Plus } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { RecipientDialog } from "./reciepient-dialog"
-import useTemasStore from "@/store/temas.store"
-import useEmpresasStore from "@/store/empresas.store"
-import useAreasStore from "@/store/areas.store"
-import useSubAreasStore from "@/store/subareas.store"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogOverlay, DialogTitle } from "./ui/dialog"
 import { ScrollArea } from "./ui/scroll-area"
 import { Switch } from "./ui/switch"
+import SearchableSelect from "./SearchableSelect"
+import { useGetReceiver } from "@/lib/queries/receivers.queries"
+import { useGetTemas } from "@/lib/queries/themes.queries"
+import { useGetEmpresas } from "@/lib/queries/companies.queries"
+import { useGetAreas } from "@/lib/queries/areas.queries"
+import { useGetSubAreas } from "@/lib/queries/subareas.queries"
+import { DragAndDropInput } from "./drag-and-drop-input"
 
 interface DialogProps {
     open: boolean
@@ -37,64 +39,121 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     const [openPopover, setOpenPopover] = useState(false);
     const [openPopoverOne, setOpenPopoverOne] = useState(false);
     const [recipientDialogOpen, setRecipientDialogOpen] = useState(false)
-    const { destinatarios, fetchDestinatarios } = useDestinatariosStore()
-    const { temas, fetchTemas } = useTemasStore()
-    const { empresas, fetchEmpresas } = useEmpresasStore()
-    const { areas, fetchAreas } = useAreasStore()
-    const { subareas, fetchSubAreas } = useSubAreasStore()
+    const {data: destinatarios, isLoading: isLoadingDestinatario} = useGetReceiver()
+    const { data: temas, isLoading: isLoadingTemas } = useGetTemas()
+    const { data: empresas, isLoading: isLoadingEmpresa } = useGetEmpresas()
+    const { data: areas, isLoading: isLoadingAreas } = useGetAreas()
+    const { data: subareas, isLoading: isLoadingSub } = useGetSubAreas()
 
     const form = useForm<ReceivedLetterForm>({
         resolver: zodResolver(receivedLetterSchema),
         defaultValues: {
+            codigoRecibido: "",
+            fechaIngreso: new Date(),
+            destinatario: "",
+            asunto: "",
+            pdfInfo: undefined,
             esConfidencial: false,
+            tipo: false,
+            referencia: "",
+            resumenRecibido: "",
+            temaId: "",
+            areaResponsableId: "",
+            subAreaId: "",
+            empresaId: "",
+            nivelImpacto: "",
+            correosCopia: "",
             vencimiento: false,
+            fechadevencimiento: undefined,
             informativo: false,
             urgente: false,
         },
+        
     })
 
-    const { data, error, isLoading } = useGetCardById(id)
-    const { mutate: createReceivedCard } = useCreateReceivedCardMutation(form.reset)
-
+    const { data: cards, isLoading: isLoadingCards } = useGetCards()
+    const { data, error, isLoading } = useGetCardById(id, open)
+    const { AlertDialog, mutation } = useCreateReceivedCardMutation(form.reset, onOpenChange)
 
     useEffect(() => {
-        fetchDestinatarios() // Obtener destinatarios
-        fetchSubAreas()
-        fetchAreas()
-        fetchTemas()
-        fetchEmpresas()
-        if (data) {
-            form.setValue("codigoRecibido", data.codigoRecibido || "")
-            form.setValue("destinatario", data.destinatario || "")
-            form.setValue("asunto", data.asunto || "")
-            form.setValue("fechaIngreso", data.fechaIngreso || new Date())
-            form.setValue("esConfidencial", data.esConfidencial || false)
+        
+        if (open && data) {
+            
+            form.setValue("codigoRecibido", data.codigoRecibido || "");
+            form.setValue("destinatario", data.destinatario || "");
+            form.setValue("asunto", data.asunto || "");
+            form.setValue("fechaIngreso", data.fechaIngreso || new Date());
+            form.setValue("esConfidencial", data.esConfidencial || false);
+            form.setValue("tipo", data.tipo==="Respondido"?true:false);
+            form.setValue("referencia", data.referencia || "");
+            form.setValue("resumenRecibido", data.resumenRecibido || "");
+            form.setValue("temaId", String(data.temaId) );
+            form.setValue("areaResponsableId", String(data.areaResponsableId) );
+            form.setValue("subAreaId", String(data.subAreaId) );
+            form.setValue("empresaId", String(data.empresaId) );
+            form.setValue("nivelImpacto", data.nivelImpacto || "");
+            form.setValue("correosCopia", data.correosCopia);
+            form.setValue("vencimiento", data.vencimiento || false);
+            //form.setValue("fechadevencimiento", data.fechadevencimiento || new Date());
+            form.setValue("informativo", data.informativo || false);
+            form.setValue("urgente", data.urgente || false);
         }
-    }, [data, fetchDestinatarios, fetchSubAreas, fetchSubAreas, fetchTemas, fetchEmpresas, form]) // Este effect depende de los datos de la carta y los destinatarios
-
-    useEffect(() => {
         if (!open) {
-            form.reset()
+            form.reset({
+                codigoRecibido: "",
+                fechaIngreso: new Date(),
+                destinatario: "",
+                asunto: "",
+                pdfInfo: undefined,
+                esConfidencial: false,
+                tipo: false,
+                referencia: "",
+                resumenRecibido: "",
+                temaId: "",
+                areaResponsableId: "",
+                subAreaId: "",
+                empresaId: "",
+                nivelImpacto: "",
+                correosCopia: "",
+                vencimiento: false,
+                fechadevencimiento: new Date(),
+                informativo: false,
+                urgente: false,
+            });
         }
-    }, [open, onOpenChange])
+    }, [data, form, open, id]) // Este effect depende de los datos de la carta y los destinatarios
 
     function onSubmit(data: ReceivedLetterForm) {
-        createReceivedCard(data)
-        onOpenChange(false)
+        mutation.mutate(data)
     }
 
-    if (!open && isLoading) return null; // No renderizar si el formulario no está abierto
+    if (!open) return null; // No renderizar si el modal no está abierto
+
+    // Si se está cargando alguna de las entidades, mostrar el loading
+    if (isLoading || isLoadingCards || isLoadingSub || isLoadingTemas ||isLoadingAreas || isLoadingDestinatario || isLoadingEmpresa) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+        {/* Ícono de Lucide con animación */}
+        <LoaderCircle className="w-12 h-12 text-blue-500 animate-spin" />
+        {/* Texto de carga */}
+        <p className="mt-4 text-lg text-gray-700">Cargando...</p>
+      </div>
+      );
+    }
 
 
     return (
         <Dialog
             open={open}
-            onOpenChange={(open) => { onOpenChange(open) }}
+            onOpenChange={
+                (open) => { 
+                    onOpenChange(open) 
+                    
+                }}
         >
             <DialogOverlay className={open ? "visible" : "hidden"} asChild />
             <DialogContent
                 className="sm:max-w-[700px] h-[80vh] flex flex-col"
-
             >
                 <DialogHeader>
                     <DialogTitle>
@@ -222,11 +281,16 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                             <FormField
                                 control={form.control}
                                 name="pdfInfo"
-                                render={({ field: { value, onChange, ...field } }) => (
+                                render={({ field: { onChange } }) => (
                                     <FormItem>
                                         <FormLabel>Carta Recibida:</FormLabel>
                                         <FormControl>
-                                            <Input type="file" onChange={(e) => onChange(e.target.files?.[0])} {...field} className="w-full" />
+                                            {/* <Input 
+                                                type="file" 
+                                                onChange={(e) => onChange(e.target.files?.[0])} 
+                                                {...field} 
+                                                className="w-full" /> */}
+                                            <DragAndDropInput onChange={(file) => onChange(file)} accept=".pdf" />
                                         </FormControl>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
@@ -255,24 +319,30 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                             <Switch checked={field.value} onCheckedChange={field.onChange} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>{field.value? 'Recibido':'Respondido'}</FormLabel>
+                                            <FormLabel>{field.value? 'Respondido':'Recibido'}</FormLabel>
                                         </div>
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                            {form.watch('tipo') ? <FormField
                                 control={form.control}
                                 name="referencia"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Referencia:</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} className="w-full" />
-                                        </FormControl>
+                                        <SearchableSelect
+                                            options={cards?.data?.map((card)=>({
+                                                value: String(card.id),
+                                                label: card.codigoRecibido
+                                            }))}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar la Carta a Responder"
+                                        />
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
                                 )}
-                            />
+                            />: null}
                             <FormField
                                 control={form.control}
                                 name="resumenRecibido"
@@ -315,18 +385,15 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
                                             <FormLabel>Area Responsable:</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Seleccionar Area" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {areas && areas.map(area => (
-                                                        <SelectItem value={String(area.id)} key={area.id}>{area.nombre}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <SearchableSelect
+                                                options={areas && areas.map((area)=>({
+                                                    value: String(area.id),
+                                                    label: area.nombre
+                                                }))}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Seleccionar Area"
+                                            />
                                             <FormMessage className="text-red-500 text-sm" />
                                         </FormItem>
                                     )}
@@ -425,7 +492,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                             <FormControl>
                                                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                             </FormControl>
-                                            <FormDescription>Marca si la carta es confidencial xd</FormDescription>
+                                            <FormLabel>Vencimiento</FormLabel>
                                         </FormItem>
                                     )}
                                 />
@@ -507,7 +574,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                     </Form>
 
                 </ScrollArea>
-
+             <AlertDialog />
             </DialogContent>
         </Dialog>
     )

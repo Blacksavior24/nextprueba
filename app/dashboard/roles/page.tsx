@@ -24,10 +24,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
-import React, { useEffect, useState, useCallback } from 'react';
-import useRolesStore from '@/store/roles.store';
-import Swal from 'sweetalert2';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'; // Importamos el ícono X
+import React, { useState } from 'react';
+import { CreateRolDto, Rol } from '@/interfaces/roles.interfaces';
+import { useCreateRol, useDeleteRol, useGetRoles, useUpdateRol } from '@/lib/queries/roles.queries';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -35,14 +37,14 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [editingRole, setEditingRole] = useState<{ id: number; nombre: string } | null>(null);
+  const [newRol, setNewRol] = useState<CreateRolDto>({
+      nombre: '',
+    })
+  const [editingRole, setEditingRole] = useState<Rol | null>(null);
 
-  const { roles, loading, isUpdating, error, fetchRoles, updateRol, deleteRol, createRol } = useRolesStore();
+  const { data: rolesResponse, isLoading, error} = useGetRoles()
 
-  useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
+  const roles = rolesResponse || [];
 
   const filteredRoles = roles.filter((rol) =>
     rol.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -55,60 +57,48 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateRol = useCallback(async () => {
-    if (!newRoleName) {
-      Swal.fire('Error', 'El nombre del rol es requerido', 'error');
-      return;
-    }
+  const { mutation: createRolMutation , AlertDialog: CreateAlertDialog} = useCreateRol()
+  const { mutation: updateRolMutation , AlertDialog: UpdateAlertDialog} = useUpdateRol()
+  const { mutation: deleteRolMutation , AlertDialog: DeleteAlertDialog} = useDeleteRol()
+  
+  const handleCreateOrUpdateRol = async () => {
+    if (editingRole) {
+      updateRolMutation.mutate(
+        { id: String(editingRole.id), Data: newRol},
+        {
+          onSuccess: () => {
+            setIsModalOpen(false);
+            setEditingRole(null);
+          }
+        }
+      )
+     } else {
+        createRolMutation.mutate(newRol, {
+          onSuccess: () => {
+            setIsModalOpen(false);
+            setNewRol({
+              nombre: ''
+            })
+          }
+        })
+     }
+  }
 
-    try {
-      if (editingRole) {
-        await updateRol(editingRole.id, { nombre: newRoleName });
-        Swal.fire('¡Éxito!', 'El rol se actualizó correctamente.', 'success');
-      } else {
-        await createRol({ nombre: newRoleName });
-        Swal.fire('¡Éxito!', 'El rol se creó correctamente.', 'success');
-      }
-
-      setIsModalOpen(false); // Cerrar el modal
-      setNewRoleName('');
-      setEditingRole(null);
-      fetchRoles(); // Recargar la lista de roles
-    } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar el rol.', 'error');
-    }
-  }, [newRoleName, editingRole, updateRol, createRol, fetchRoles]);
-
-  const handleEditClick = useCallback((rol: { id: number; nombre: string }) => {
+  const handleEditClick = (rol: Rol) => {
+    setNewRol(rol);
     setEditingRole(rol);
-    setNewRoleName(rol.nombre);
     setIsModalOpen(true); // Abrir el modal
-  }, []);
+  }
 
-  const handleDeleteRol = useCallback(async (id: number) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¡No podrás revertir esto!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deleteRol(id);
-        Swal.fire('¡Eliminado!', 'El rol ha sido eliminado.', 'success');
-        fetchRoles();
-      } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar el rol.', 'error');
-      }
-    }
-  }, [deleteRol, fetchRoles]);
+  const handleDeleteRol = async (id: string) => {
+    deleteRolMutation.mutate(id)
+  }
 
   return (
     <div className="container mx-auto px-10">
+      <CreateAlertDialog />
+      <UpdateAlertDialog />
+      <DeleteAlertDialog />
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
@@ -116,7 +106,13 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingRole(null); setNewRoleName(''); setIsModalOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingRole(null); 
+              setNewRol({
+                nombre: ''
+              })
+              setIsModalOpen(true); 
+              }}>
               Agregar Rol
             </Button>
 
@@ -141,7 +137,7 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center">
                   Cargando...
@@ -150,7 +146,7 @@ export default function Page() {
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-red-600">
-                  Error: {error}
+                  Error: No se pudo encontrar Roles
                 </TableCell>
               </TableRow>
             ) : (
@@ -168,15 +164,14 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(rol)}
-                          disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteRol(rol.id)}
-                          disabled={isUpdating}
+                          onClick={() => handleDeleteRol(String(rol.id))}
+                          disabled={deleteRolMutation.isPending}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -191,33 +186,37 @@ export default function Page() {
         </Table>
 
         {/* Modal personalizado con Tailwind CSS */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold dark:text-blue-900">
-                  {editingRole ? 'Editar Rol' : 'Agregar Nuevo Rol'}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)} // Cerrar el modal
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Nombre del rol"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value)}
-                />
-                <Button onClick={handleCreateOrUpdateRol} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingRole ? 'Guardar Cambios' : 'Guardar'}
-                </Button>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>{editingRole?'Editar Rol':'Nuevo Rol'}</DialogTitle>
+            </DialogHeader>
+            <div className='grid gap-4 py-4'>
+            <div className='grid gap-2'>
+                  <Label htmlFor='nombre'>Nombre</Label>
+                  <Input
+                    id='nombre'
+                    value={newRol.nombre}
+                    onChange={(e)=> setNewRol({...newRol, nombre: e.target.value})}
+                  />
               </div>
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={handleCreateOrUpdateRol}
+                disabled={createRolMutation.isPending || updateRolMutation.isPending}
+              >
+                {createRolMutation.isPending || updateRolMutation.isPending
+                ? "Guardando"
+                : editingRole
+                ? "Guardar Cambios"
+                : "Guardar"
+                }
+
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
 

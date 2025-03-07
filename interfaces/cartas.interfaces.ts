@@ -22,6 +22,7 @@ export interface CreateCardDto {
   resumenRecibido?: string; // string, opcional
   nivelImpacto?: string; // string, opcional
   fechadevencimiento: Date; // Date, requerida
+  tipo: boolean
 }
 
 export interface ReceivedCardDto {
@@ -29,8 +30,20 @@ export interface ReceivedCardDto {
   codigoRecibido: string;
   destinatario: string;
   asunto: string;
+  referencia?: string;
   esConfidencial: boolean;
   fechaIngreso: Date;
+  correosCopia?: string,
+  areaResponsableId: string;
+  subAreaId: string;
+  empresaId: string;
+  nivelImpacto?: string;
+  temaId: string;
+  vencimiento?: boolean;
+  fechadevencimiento?: Date;
+  informativo?: boolean;
+  urgente?: boolean;
+  tipo: boolean
 }
 
 export interface AssignedCardDto {
@@ -85,7 +98,7 @@ export interface Card {
   resumenRecibido: string;
   tema: string;
   nivelImpacto: string;
-  correosCopia: string[];
+  correosCopia: string;
   areaResponsableId: number;
   subAreaId: number;
   empresaId: number;
@@ -107,7 +120,7 @@ export interface Card {
   subArea: SubArea;
   empresa: Empresa;
   temaRelacion: Tema;
-  referencia?: number;
+  referencia?: string;
   cartaAnterior?: Card;
   respuestas: Card[];
   tipo: type;
@@ -115,5 +128,22 @@ export interface Card {
 
 enum type {
   Recibido = "Recibido",
-  Enviado = "Enviado"
+  Respondido = "Respondido"
 }
+
+export interface Meta {
+  total: number;
+  page: number;
+  limit: number;
+  last_page: number;
+}
+
+
+export interface CardsResponse{
+  data: Card[];
+  meta: Meta;
+
+}
+
+
+

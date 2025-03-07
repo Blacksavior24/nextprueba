@@ -24,13 +24,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
-import React, { useEffect, useState, useCallback } from 'react';
-import useSubAreasStore from '@/store/subareas.store';
-import useAreasStore from '@/store/areas.store'; // Nuevo store para áreas
-import Swal from 'sweetalert2';
-import { SubArea } from '@/interfaces/subareas.interfaces';
-import { Area } from '@/interfaces/areas.interfaces'; // Interfaz para áreas
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'; // Importamos el ícono X
+import React, { useState } from 'react';
+import { CreateSubAreaDto, SubArea } from '@/interfaces/subareas.interfaces';
+import { useCreateSubArea, useDeleteSubArea, useGetSubAreas, useUpdateSubArea } from '@/lib/queries/subareas.queries';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useGetAreas } from '@/lib/queries/areas.queries';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -38,19 +39,22 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newSubAreaName, setNewSubAreaName] = useState('');
-  const [newProcedencia, setProcedencia] = useState('');
-  const [newAreaResponsableId, setAreaResponsableId] = useState<number | null>(null);
-  const [newJefatura, setJefatura] = useState('');
+  const [newSubArea, setNewSubArea] = useState<CreateSubAreaDto>({
+    nombre: '',
+    procedencia: '',
+    areaResponsableId: '' ,
+    jefatura: ''
+  })
+  
   const [editingSubArea, setEditingSubArea] = useState<SubArea | null>(null);
 
-  const { subareas, loading, isUpdating, error, fetchSubAreas, updateSubArea, deleteSubArea, createSubArea } = useSubAreasStore();
-  const { areas, fetchAreas } = useAreasStore(); // Obtener áreas
+ 
+  const { data: subAreasResponse, isLoading, error} = useGetSubAreas()
+  const { data: areasResponse} = useGetAreas()
 
-  useEffect(() => {
-    fetchAreas(); // Cargar áreas al montar el componente
-    fetchSubAreas();
-  }, [fetchSubAreas, fetchAreas]);
+
+  const subareas = subAreasResponse || [];
+  const areas = areasResponse || [];
 
   const filteredSubAreas = subareas.filter((subArea) =>
     subArea.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -63,76 +67,51 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateSubArea = useCallback(async () => {
-    if (!newSubAreaName || !newAreaResponsableId) {
-      Swal.fire('Error', 'El nombre y el área responsable son requeridos', 'error');
-      return;
+  const { mutation: createSubAreaMutation , AlertDialog: CreateAlertDialog} = useCreateSubArea()
+  const { mutation: updateSubAreaMutation , AlertDialog: UpdateAlertDialog} = useUpdateSubArea()
+  const { mutation: deleteSubAreaMutation , AlertDialog: DeleteAlertDialog} = useDeleteSubArea()
+
+  const handleCreateOrUpdateSubArea = async () => {
+    if (editingSubArea) {
+      updateSubAreaMutation.mutate(
+        { id: String(editingSubArea.id), Data: newSubArea},
+        {
+          onSuccess: () => {
+            setIsModalOpen(false);
+            setEditingSubArea(null);
+          }
+        }
+      )
+    } else {
+      createSubAreaMutation.mutate(newSubArea,{
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setNewSubArea({
+            nombre: '',
+            procedencia: '',
+            areaResponsableId: '',
+            jefatura: ''
+          })
+        }
+      })
     }
+  }
 
-    try {
-      if (editingSubArea) {
-        await updateSubArea(editingSubArea.id, { 
-          nombre: newSubAreaName, 
-          procedencia: newProcedencia, 
-          areaResponsableId: newAreaResponsableId, 
-          jefatura: newJefatura 
-        });
-        Swal.fire('¡Éxito!', 'La subárea se actualizó correctamente.', 'success');
-      } else {
-        await createSubArea({ 
-          nombre: newSubAreaName, 
-          procedencia: newProcedencia, 
-          areaResponsableId: newAreaResponsableId, 
-          jefatura: newJefatura 
-        });
-        Swal.fire('¡Éxito!', 'La subárea se creó correctamente.', 'success');
-      }
+  const handleEditClick = (subArea: SubArea) => {
+    setNewSubArea(subArea)
+    setEditingSubArea(subArea)
+    setIsModalOpen(true)
+  }
 
-      setIsModalOpen(false); // Cerrar el modal
-      setNewSubAreaName('');
-      setProcedencia('');
-      setAreaResponsableId(null);
-      setJefatura('');
-      setEditingSubArea(null);
-      fetchSubAreas(); // Recargar la lista de subáreas
-    } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar la subárea.', 'error');
-    }
-  }, [newSubAreaName, newProcedencia, newAreaResponsableId, newJefatura, editingSubArea, updateSubArea, createSubArea, fetchSubAreas]);
-
-  const handleEditClick = useCallback((subArea: SubArea) => {
-    setEditingSubArea(subArea);
-    setNewSubAreaName(subArea.nombre);
-    setProcedencia(subArea.procedencia || '');
-    setAreaResponsableId(subArea.areaResponsableId);
-    setJefatura(subArea.jefatura || '');
-    setIsModalOpen(true); // Abrir el modal
-  }, []);
-
-  const handleDeleteSubArea = useCallback(async (id: number) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¡No podrás revertir esto!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deleteSubArea(id);
-        Swal.fire('¡Eliminado!', 'La subárea ha sido eliminada.', 'success');
-        fetchSubAreas();
-      } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar la subárea.', 'error');
-      }
-    }
-  }, [deleteSubArea, fetchSubAreas]);
+  const handleDeleteSubArea = async (id: string) => {
+    deleteSubAreaMutation.mutate(id)
+  }
 
   return (
     <div className="container mx-auto px-10">
+      <CreateAlertDialog />
+      <UpdateAlertDialog />
+      <DeleteAlertDialog />
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
@@ -140,7 +119,16 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingSubArea(null); setNewSubAreaName(''); setProcedencia(''); setAreaResponsableId(null); setJefatura(''); setIsModalOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingSubArea(null); 
+              setNewSubArea({
+                nombre: '',
+                procedencia: '',
+                areaResponsableId: '',
+                jefatura: ''
+              })
+              setIsModalOpen(true); 
+              }}>
               Agregar SubÁrea
             </Button>
 
@@ -168,7 +156,7 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center">
                   Cargando...
@@ -177,7 +165,7 @@ export default function Page() {
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-red-600">
-                  Error: {error}
+                  Error: No se pueden obtener las Sub Areas
                 </TableCell>
               </TableRow>
             ) : (
@@ -198,15 +186,15 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(subArea)}
-                          disabled={isUpdating}
+                          //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteSubArea(subArea.id)}
-                          disabled={isUpdating}
+                          onClick={() => handleDeleteSubArea(String(subArea.id))}
+                          disabled={deleteSubAreaMutation.isPending}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -219,57 +207,82 @@ export default function Page() {
             )}
           </TableBody>
         </Table>
-
-        {/* Modal personalizado con Tailwind CSS */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  {editingSubArea ? 'Editar SubÁrea' : 'Agregar Nueva SubÁrea'}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)} // Cerrar el modal
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>{editingSubArea?'Editar Sub Area':'Nuevo Sub Area'}</DialogTitle>
+            </DialogHeader>
+            <div className='grid gap-4 py-4'>
+              <div className='grid gap-2'>
+                  <Label htmlFor='nombre'>Nombre</Label>
+                  <Input
+                    id='nombre'
+                    value={newSubArea.nombre}
+                    onChange={(e)=> setNewSubArea({...newSubArea, nombre: e.target.value})}
+                  />
               </div>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Nombre de la subárea"
-                  value={newSubAreaName}
-                  onChange={(e) => setNewSubAreaName(e.target.value)}
-                />
-                <Input
-                  placeholder="Procedencia"
-                  value={newProcedencia}
-                  onChange={(e) => setProcedencia(e.target.value)}
-                />
-                <select
-                  value={newAreaResponsableId || ''}
-                  onChange={(e) => setAreaResponsableId(Number(e.target.value))}
-                  className="w-full p-2 border rounded"
+              <div className='grid gap-2'>
+                  <Label htmlFor='procedencia'>Procedencia</Label>
+                  <Input
+                    id='procedencia'
+                    value={newSubArea.procedencia}
+                    onChange={(e)=> setNewSubArea({...newSubArea, procedencia: e.target.value})}
+                  />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="area">Area</Label>
+                <Select
+                  value={newSubArea.areaResponsableId}
+                  onValueChange={(value) => setNewSubArea({ ...newSubArea, areaResponsableId: value })}
                 >
-                  <option value="">Seleccione un área responsable</option>
-                  {areas.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.nombre}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  placeholder="Jefatura"
-                  value={newJefatura}
-                  onChange={(e) => setJefatura(e.target.value)}
-                />
-                <Button onClick={handleCreateOrUpdateSubArea} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingSubArea ? 'Guardar Cambios' : 'Guardar'}
-                </Button>
+                  <SelectTrigger id="area">
+                    <SelectValue placeholder="Seleccione un Area" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areas.map((area) => (
+                      <SelectItem key={area.id} value={String(area.id)}>
+                        {area.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='grid gap-2'>
+                  <Label htmlFor='jefatura'>Jefatura</Label>
+                  <Select
+                    value={newSubArea.jefatura}
+                    onValueChange={(value)=> setNewSubArea({ ...newSubArea, jefatura: value})}
+                  >
+                    <SelectTrigger id='jefatura'>
+                      <SelectValue placeholder="Jefatura?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem key="subarea-1" value='Si'>
+                          Si
+                      </SelectItem>
+                      <SelectItem key="subarea-0" value='No'>
+                          No
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
               </div>
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={handleCreateOrUpdateSubArea}
+                disabled={createSubAreaMutation.isPending || updateSubAreaMutation.isPending}
+              >
+                {createSubAreaMutation.isPending || updateSubAreaMutation.isPending
+                ? "Guardando"
+                : editingSubArea
+                ? "Guardar Cambios"
+                : "Guardar"
+                }
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         <div className="p-4 border-t">
           <Pagination>

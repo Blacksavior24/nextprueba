@@ -41,7 +41,7 @@ export const getTemas = async () => {
     }
 }
 
-export const getTema = async (id: string) => {
+export const getTemaById = async (id: string) => {
     try {
         const response = await formsApi.get<Tema>(`theme/${id}`)
         return response.data

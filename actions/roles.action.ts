@@ -41,7 +41,7 @@ export const getRols = async () => {
     }
 }
 
-export const getRol = async (id: string) => {
+export const getRolById = async (id: string) => {
     try {
         const response = await formsApi.get<Rol>(`roles/${id}`)
         return response.data

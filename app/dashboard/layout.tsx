@@ -5,6 +5,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
   } from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button";
   
 import { Separator } from "@/components/ui/separator"
 import {
@@ -13,6 +14,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/auth.store"
+import { Home } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react"
 
 export default function Page({children}: {children: ReactNode}) {
@@ -28,6 +31,13 @@ export default function Page({children}: {children: ReactNode}) {
     }
   },[user, fetchProfile])
 
+  const router = useRouter()
+
+  const handleDashboard = () => {
+
+    router.push('/dashboard')
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -39,7 +49,14 @@ export default function Page({children}: {children: ReactNode}) {
                     <Breadcrumb>
                     <BreadcrumbList>
                                     <BreadcrumbItem className="hidden md:block">
-                                        GRUPO SUR - SISTEMA DE CARTAS
+                                    <Button
+                      variant="ghost"
+                      className="flex items-center gap-2 text-sm font-medium"
+                      onClick={handleDashboard}
+                    >
+                      <Home className="h-4 w-4" />
+                      <span className="hidden md:inline">GRUPO SUR - SISTEMA DE CARTAS</span>
+                    </Button>
                                     </BreadcrumbItem>
                                   </BreadcrumbList>
                     </Breadcrumb>

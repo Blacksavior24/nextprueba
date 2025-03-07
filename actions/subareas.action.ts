@@ -4,7 +4,7 @@ import { AxiosError } from "axios"
 
 export const createSubArea = async(data : CreateSubAreaDto) => {
     try {
-        const response = await formsApi.post("responsible-area", data)
+        const response = await formsApi.post("sub-areas", data)
         return response.data
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -17,7 +17,7 @@ export const createSubArea = async(data : CreateSubAreaDto) => {
 
 export const updateSubArea = async(id: string, data: Partial<CreateSubAreaDto>) => {
     try {
-        const response = await formsApi.patch(`responsible-area/${id}`, data)
+        const response = await formsApi.patch(`sub-areas/${id}`, data)
         return response.data
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -30,7 +30,7 @@ export const updateSubArea = async(id: string, data: Partial<CreateSubAreaDto>) 
 
 export const getSubAreas = async () => {
     try {
-        const response = await formsApi.get<SubArea[]>("responsible-area")
+        const response = await formsApi.get<SubArea[]>("sub-areas")
         return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
@@ -41,9 +41,9 @@ export const getSubAreas = async () => {
     }
 }
 
-export const getSubArea= async (id: string) => {
+export const getSubAreaById = async (id: string) => {
     try {
-        const response = await formsApi.get<SubArea>(`responsible-area/${id}`)
+        const response = await formsApi.get<SubArea>(`sub-areas/${id}`)
         return response.data
     } catch (error) {
     if (error instanceof AxiosError && error.response) {
@@ -56,7 +56,7 @@ export const getSubArea= async (id: string) => {
 
 export const deleteSubArea = async (id: string) => {
     try {
-        const response = await formsApi.delete(`responsible-area/${id}`)
+        const response = await formsApi.delete(`sub-areas/${id}`)
         return response.data
     } catch (error) {
         if (error instanceof AxiosError && error.response) {

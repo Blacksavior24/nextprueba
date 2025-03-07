@@ -1,23 +1,28 @@
-
-import Swal from "sweetalert2"
 import { createReceivedCard, getCardById, getCards, getCardsEmitidos } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Card, CreateCardDto } from "@/interfaces/cartas.interfaces"
+import { Card, CardsResponse, CreateCardDto } from "@/interfaces/cartas.interfaces"
+import { useAlertDialog } from "@/components/AlertDialog"
 
-export const useGetCards = () => {
-    return useQuery<Card[]>({
-        queryKey: ["cards"],
-        queryFn: getCards,
-        staleTime: 1000*10*10
+export const useGetCards = (
+    page: number = 1,
+    limit: number = 10,
+    filters?: Record<string, string>,
+    search?: string,
+    searchBy?: string[]
+) => {
+    return useQuery<CardsResponse>({
+        queryKey: ["cards", page, limit, filters, search, searchBy],
+        queryFn: ()=>getCards(page, limit, filters, search,searchBy),
+        staleTime: 1000*10*10,
     })
 }
 
-export const useGetCardById = (id: string) => {
+export const useGetCardById = (id: string, open: boolean) => {
     return useQuery<{fechaIngreso: Date} & Omit<Card, 'fechaIngreso'>>({
         queryKey: ['card', id],
         queryFn: () => getCardById(id),
         staleTime: 1000*10*10,
-        enabled: !!id
+        enabled: !!id && open
     })
 }
 
@@ -27,28 +32,40 @@ export const useGetCardsEmitidos = () => {
       queryFn: getCardsEmitidos,
       staleTime: 1000*10*10
   })
-}
+}   
 
 
-export const useCreateReceivedCardMutation = (resetForm: () => void) => {
-  return useMutation({
-    mutationFn: (data: { pdfInfo: File } & Omit<CreateCardDto, 'pdfInfo'>) => createReceivedCard(data),
-    onSuccess: () => {
-      Swal.fire({
-        title: "¡Éxito!",
-        text: "Carta recibida creada exitosamente",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-      })
-      resetForm()
-    },
-    onError: (error: string) => {
-      Swal.fire({
-        title: "Error",
-        text: `Ocurrió un error al crear la carta: ${error}`,
-        icon: "error",
-        confirmButtonText: "Aceptar",
-      })
-    },
-  })
-}
+export const useCreateReceivedCardMutation = (
+  resetForm: () => void,
+  onOpenChange: (open: boolean) => void
+) => {
+  const { fire, AlertDialog } = useAlertDialog();
+
+  return {
+      AlertDialog, // Exportar el componente para renderizarlo en tu aplicación
+      mutation: useMutation({
+          mutationFn: (data: { pdfInfo: File } & Omit<CreateCardDto, "pdfInfo">) =>
+              createReceivedCard(data),
+          onSuccess: () => {
+              fire({
+                  title: "¡Éxito!",
+                  text: "Carta recibida creada exitosamente",
+                  icon: "success",
+                  confirmButtonText: "Aceptar",
+                  onConfirm: () => {
+                      resetForm();
+                      onOpenChange(false);
+                  },
+              });
+          },
+          onError: (error: string) => {
+              fire({
+                  title: "Error",
+                  text: `Ocurrió un error al crear la carta: ${error}`,
+                  icon: "error",
+                  confirmButtonText: "Aceptar",
+              });
+          },
+      }),
+  };
+};

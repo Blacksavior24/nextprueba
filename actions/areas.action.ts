@@ -16,8 +16,9 @@ export const createArea = async(data : CreateAreaDto) => {
 }
 
 export const updateArea = async(id: string, data: Partial<CreateAreaDto>) => {
+    const {subAreas, ...rest} = data
     try {
-        const response = await formsApi.patch(`responsible-area/${id}`, data)
+        const response = await formsApi.patch(`responsible-area/${id}`, rest)
         return response.data
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -41,7 +42,7 @@ export const getAreas = async () => {
     }
 }
 
-export const getArea = async (id: string) => {
+export const getAreaById = async (id: string) => {
     try {
         const response = await formsApi.get<Area>(`responsible-area/${id}`)
         return response.data

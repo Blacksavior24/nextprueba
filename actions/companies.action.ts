@@ -41,7 +41,7 @@ export const getEmpresas = async () => {
     }
 }
 
-export const getEmpresa = async (id: string) => {
+export const getEmpresaById = async (id: string) => {
     try {
         const response = await formsApi.get<Empresa>(`company/${id}`)
         return response.data

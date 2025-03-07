@@ -8,7 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     router.replace("/login"); // Reemplaza la URL actual por /login
-  }, []);
+  }, [router]);
 
   return null; // No renderiza nada
   

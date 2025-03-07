@@ -24,10 +24,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
-import React, { useEffect, useState, useCallback } from 'react';
-import useEmpresasStore from '@/store/empresas.store';
-import Swal from 'sweetalert2';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'; // Importamos el ícono X
+import React, { useState } from 'react';
+import { CreateEmpresaDto, Empresa } from '@/interfaces/empresas.interfaces';
+import { useCreateEmpresa, useDeleteEmpresa, useGetEmpresas, useUpdateEmpresa } from '@/lib/queries/companies.queries';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -35,15 +37,14 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newEmpresaName, setNewEmpresaName] = useState('');
-  const [editingEmpresa, setEditingEmpresa] = useState<{ id: number; nombre: string } | null>(null);
+  const [newEmpresa, setNewEmpresa] = useState<CreateEmpresaDto>({
+    nombre: ''
+  })
+  const [editingEmpresa, setEditingEmpresa] = useState<Empresa | null>(null);
 
-  const { empresas, loading, isUpdating, error, fetchEmpresas, updateEmpresa, deleteEmpresa, createEmpresa } = useEmpresasStore();
+  const {data: empresasResponse, isLoading, error} = useGetEmpresas()
 
-  useEffect(() => {
-    fetchEmpresas();
-  }, [fetchEmpresas]);
-
+  const empresas = empresasResponse || [];
   const filteredEmpresas = empresas.filter((empresa) =>
     empresa.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
@@ -55,60 +56,49 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateEmpresa = useCallback(async () => {
-    if (!newEmpresaName) {
-      Swal.fire('Error', 'El nombre del empresa es requerido', 'error');
-      return;
+  const { mutation: createEmpresaMutation , AlertDialog: CreateAlertDialog} = useCreateEmpresa()
+  const { mutation: updateEmpresaMutation , AlertDialog: UpdateAlertDialog} = useUpdateEmpresa()
+  const { mutation: deleteEmpresaMutation , AlertDialog: DeleteAlertDialog} = useDeleteEmpresa()  
+
+  const handleCreateOrUpdateEmpresa = async () => {
+    if (editingEmpresa) {
+      updateEmpresaMutation.mutate(
+        { id: String(editingEmpresa.id), Data: newEmpresa},
+        {
+          onSuccess: () => {
+            setIsModalOpen(false);
+            setEditingEmpresa(null);
+          }
+        }
+      )
+    }else{
+      createEmpresaMutation.mutate(newEmpresa,{
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setNewEmpresa({
+            nombre: ''
+          })
+        }
+      })
+
     }
+  }
 
-      if (editingEmpresa) {
-        await updateEmpresa(editingEmpresa.id, { nombre: newEmpresaName });
-      } else {
-        await createEmpresa({ nombre: newEmpresaName });
-      }
-
-      if (error) {
-        Swal.fire('Error', `Hubo un problema al guardar el empresa. ${error}`, 'error');
-      }
-
-      Swal.fire('¡Éxito!', editingEmpresa? 'El empresa se actualizó correctamente.':'El empresa se creó correctamente.', 'success');
-
-      setIsModalOpen(false); // Cerrar el modal
-      setNewEmpresaName('');
-      setEditingEmpresa(null);
-      fetchEmpresas(); // Recargar la lista de Empresas
-  }, [newEmpresaName, editingEmpresa, updateEmpresa, createEmpresa, fetchEmpresas]);
-
-  const handleEditClick = useCallback((empresa: { id: number; nombre: string }) => {
+  const handleEditClick = (empresa: Empresa) => {
     setEditingEmpresa(empresa);
-    setNewEmpresaName(empresa.nombre);
+    setNewEmpresa(empresa);
     setIsModalOpen(true); // Abrir el modal
-  }, []);
+  }
 
-  const handleDeleteEmpresa = useCallback(async (id: number) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¡No podrás revertir esto!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deleteEmpresa(id);
-        Swal.fire('¡Eliminado!', 'El empresa ha sido eliminado.', 'success');
-        fetchEmpresas();
-      } catch (error) {
-        Swal.fire('Error', 'Hubo un problema al eliminar el empresa.', 'error');
-      }
-    }
-  }, [deleteEmpresa, fetchEmpresas]);
+  const handleDeleteEmpresa = async (id: string) => {
+    deleteEmpresaMutation.mutate(id)
+  }
 
   return (
     <div className="container mx-auto px-10">
+      <CreateAlertDialog />
+      <UpdateAlertDialog />
+      <DeleteAlertDialog />
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
@@ -116,7 +106,12 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingEmpresa(null); setNewEmpresaName(''); setIsModalOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingEmpresa(null); 
+              setNewEmpresa({
+                nombre: ''
+              }); 
+              setIsModalOpen(true); }}>
               Agregar Empresa
             </Button>
 
@@ -141,7 +136,7 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center">
                   Cargando...
@@ -150,7 +145,7 @@ export default function Page() {
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-red-600">
-                  Error: {error}
+                  Error: No se puede obtener Empresas
                 </TableCell>
               </TableRow>
             ) : (
@@ -168,15 +163,14 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(empresa)}
-                          disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteEmpresa(empresa.id)}
-                          disabled={isUpdating}
+                          onClick={() => handleDeleteEmpresa(String(empresa.id))}
+                          disabled={updateEmpresaMutation.isPending}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -191,33 +185,37 @@ export default function Page() {
         </Table>
 
         {/* Modal personalizado con Tailwind CSS */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  {editingEmpresa ? 'Editar Empresa' : 'Agregar Nuevo Empresa'}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)} // Cerrar el modal
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Nombre del empresa"
-                  value={newEmpresaName}
-                  onChange={(e) => setNewEmpresaName(e.target.value)}
-                />
-                <Button onClick={handleCreateOrUpdateEmpresa} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingEmpresa ? 'Guardar Cambios' : 'Guardar'}
-                </Button>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>{editingEmpresa?'Editar Empresa':'Nueva Empresa'}</DialogTitle>
+            </DialogHeader>
+            <div className='grid gap-4 py-4'>
+            <div className='grid gap-2'>
+                  <Label htmlFor='nombre'>Nombre</Label>
+                  <Input
+                    id='nombre'
+                    value={newEmpresa.nombre}
+                    onChange={(e)=> setNewEmpresa({...newEmpresa, nombre: e.target.value})}
+                  />
               </div>
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={handleCreateOrUpdateEmpresa}
+                disabled={createEmpresaMutation.isPending || updateEmpresaMutation.isPending}
+              >
+                {createEmpresaMutation.isPending || updateEmpresaMutation.isPending
+                ? "Guardando"
+                : editingEmpresa
+                ? "Guardar Cambios"
+                : "Guardar"
+                }
+
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
 

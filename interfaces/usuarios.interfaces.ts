@@ -6,15 +6,15 @@ export interface Usuario {
     id: string;
     nombre: string;
     email: string;
-    apellidos: string | null;
+    apellidos: string;
     contraseña: string;
-    areaId: string | null;
+    areaId: string;
     area: Area;
     subArea: SubArea;
-    subAreaId: string | null;
+    subAreaId: string;
     rolId: string;
     rol: Rol;
-    procedencia: string | null;
+    procedencia: string;
     tipoUsuario: "admin" | "user";
     jefe: "si" | "no";
     creadoPorId: string | null;
@@ -35,12 +35,12 @@ export interface UsuarioResponse {
   export interface CreateUsuarioDto {
     nombre: string;
     email: string;
-    apellidos?: string | null;
+    apellidos: string;
     contraseña: string;
-    areaId?: string | null;
-    subAreaId?: string | null;
+    areaId: string;
+    subAreaId: string;
     rolId: string;
-    procedencia?: string | null;
+    procedencia: string;
     tipoUsuario: "admin" | "user";
     jefe: "si" | "no";
     creadoPorId?: string | null;

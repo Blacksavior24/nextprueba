@@ -2,23 +2,16 @@
 
 import * as React from "react"
 import {
-  BookOpen,
-  Bot,
-  Package,
   Users,
   StickyNote,
-  SquareTerminal,
   CheckCheck,
   Factory,
   Key,
   Group,
   Ungroup,
-  FileInput,
-  FileUp,
   FileUser,
-  FilePen,
-  FileCheck,
   FolderTree,
+  NotepadText,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -32,7 +25,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/auth.store"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { NavReports } from "./nav-reports"
+import { useRouter } from "next/navigation"
+import { AxiosError } from "axios"
 
 // This is sample data.
 const data = {
@@ -41,73 +37,124 @@ const data = {
     email: "evillalta@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-  ],
+  teams: [],
   navMain: [
     {
       name: "Cartas",
       url: "/dashboard/cartas",
-      icon: FolderTree
-    },
-    {
-      name: "Asignar Area",
-      url: "/dashboard/asignar",
-      icon: FileUp,
+      icon: FolderTree,
+      roles: ["admin", "editor"],
     },
     {
       name: "Pendientes",
       url: "/dashboard/pendientes",
       icon: FileUser,
+      roles: ["admin", "user"],
     },
+  ],
+  reports: [
     {
-      name: "Cargo",
-      url: "/dashboard/cargo",
-      icon: FileCheck,
-    },
+      name: "Reporte",
+      url: "/dashboard/reportes",
+      icon: NotepadText,
+      roles: ["admin"],
+    }
   ],
   projects: [
     {
       name: "Usuarios",
       url: "/dashboard/usuarios",
       icon: Users,
+      roles: ["admin"],
     },
     {
       name: "Áreas",
       url: "/dashboard/areas",
       icon: Group,
+      roles: ["admin", "editor"],
     },
     {
       name: "Sub Áreas",
       url: "/dashboard/subareas",
       icon: Ungroup,
+      roles: ["admin", "editor"],
     },
     {
       name: "Temas",
       url: "/dashboard/temas",
       icon: StickyNote,
+      roles: ["admin", "editor", "user"],
     },
     {
       name: "Roles",
       url: "/dashboard/roles",
       icon: Key,
+      roles: ["admin"],
     },
     {
       name: "Empresas",
       url: "/dashboard/empresas",
       icon: Factory,
+      roles: ["admin", "editor"],
     },
     {
       name: "Destinatarios",
       url: "/dashboard/destinatarios",
-      icon: CheckCheck
+      icon: CheckCheck,
+      roles: ["admin", "editor"],
     }
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user, token, logout, fetchProfile, initializeAuth } = useAuthStore();
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
-  const { user } = useAuthStore();
+  useEffect(() => {
+    setIsClient(true);
+    initializeAuth(); // Restaurar el estado de autenticación desde localStorage
+  }, [initializeAuth]);
 
+  useEffect(() => {
+    if (isClient) {
+      const tokenStorage = localStorage.getItem('token');
+
+      // Si no hay token, redirigir al login
+      if (!token || !tokenStorage) {
+        logout();
+        router.push("/");
+        return;
+      }
+
+      // Verificar si el token sigue activo llamando a fetchProfile
+      const checkTokenValidity = async () => {
+        try {
+          await fetchProfile(); // Si fetchProfile falla, el token ha expirado
+        } catch (error) {
+          if (error instanceof AxiosError && error.response?.status === 401) {
+            logout();
+            router.push("/");
+          }
+        }
+      };
+
+      checkTokenValidity();
+    }
+  }, [token, isClient, router, logout, fetchProfile]);
+
+  // Filtrar elementos de navegación en función del rol del usuario
+  const filteredNavMain = data.navMain.filter(item => {
+    return item.roles.includes(user?.rol?.nombre || "");
+  });
+
+  const filteredProjects = data.projects.filter(item => {
+    return item.roles.includes(user?.rol?.nombre || "");
+  });
+
+  const filteredReports = data.reports.filter(item => {
+    return item.roles.includes(user?.rol?.nombre || "");
+  });
 
   return (
     <Sidebar 
@@ -118,14 +165,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <TeamSwitcher teams={data.teams} /> */}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={filteredNavMain} />
+        <NavReports reports={filteredReports} />
+        <NavProjects projects={filteredProjects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={{
           name: user?.nombre || 'Usuario',
           email: user?.email || 'email@mail.com',
-          avatar: "/avatars/shadcn.jpg"
+          avatar: "/avatars/shadcn.jpg",
+          id: user?.id || 0
         }} />
       </SidebarFooter>
       <SidebarRail />

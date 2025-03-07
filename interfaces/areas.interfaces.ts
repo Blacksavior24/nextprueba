@@ -10,4 +10,5 @@ export interface Area{
 export interface CreateAreaDto {
     nombre: string;
     procedencia: string;
+    subAreas?: SubArea[]
 }

@@ -1,4 +1,4 @@
-import { AssignedCardDto, AssignmentCardDto, Card, PendingCardDto, ReceivedCardDto } from "@/interfaces/cartas.interfaces"
+import { AssignedCardDto, AssignmentCardDto, Card, CardsResponse, PendingCardDto, ReceivedCardDto } from "@/interfaces/cartas.interfaces"
 import { formsApi } from "@/lib/axios"
 import { AxiosError } from "axios"
 import { parseISO } from "date-fns"
@@ -25,17 +25,23 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
     try {
         console.log("que esta llegando tmre", receivedCardDto)
 
-        const { pdfInfo, ...rest } = receivedCardDto
+        const { pdfInfo,correosCopia,referencia, ...rest } = receivedCardDto
 
         const fileData = await uploadFile(pdfInfo)
 
         const payload: ReceivedCardDto = {
             ...rest,
-            pdfInfo: fileData.fileName
+            pdfInfo: fileData.fileName,
         }
-        
+        console.log('payload final', payload)
+        const payloadFinal = {
+          ...payload,
+          correosCopia: [correosCopia],
+          referencia: Number(referencia),
+          tipo: payload.tipo?'Respondido':'Recibido'
+        }
 
-        const response = await formsApi.post('cards/received', payload)
+        const response = await formsApi.post('cards/received', payloadFinal)
         return response.data
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
@@ -85,15 +91,46 @@ export const changeCardAssignment = async (id: string, assignmentCardDto: Assign
     }
 }
 
-export const getCards = async () => {
+export const getCards = async (
+  page: number = 1, 
+  limit: number = 10, 
+  filters?: Record<string, string>, 
+  search?: string, 
+  searchBy?: string[] 
+):  Promise<CardsResponse> => {
     try {
-        const response = await formsApi.get<Card[]>("cards")
-        console.log("cartas", response.data)
-        const links = response.data.map(card => ({
-            ...card,
-            pdfInfo: `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${card.pdfInfo}`
+
+        console.log("que envio ptmre", searchBy)
+        
+        const params = new URLSearchParams();
+
+        if (filters) {
+          params.append('filters', JSON.stringify(filters))
+        }
+
+        if (search) {
+          params.append('search', search)
+        }
+        if (searchBy) {
+          searchBy.forEach(field=> params.append('searchBy', field))
+        }
+
+        params.append('page', page.toString())
+        params.append('limit', limit.toString())
+
+        console.log('parametro final', params.getAll)
+
+        const response = await formsApi.get<CardsResponse>('cards', {params})
+
+        const modifiedData = response.data.data.map(card=>({
+          ...card,
+          pdfInfo: `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${card.pdfInfo}`
         }))
-        return links
+
+        return {
+          ...response.data,
+          data: modifiedData
+        }
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         throw new Error(error.response.data.message)
@@ -106,19 +143,20 @@ export const getCards = async () => {
 export const getCardById = async (id:string) => {
   try {
       const response = await formsApi.get<Card>(`cards/${id}`)
-      console.log("cartas", response.data)
-      const {pdfInfo, fechaIngreso,...rest} = response.data
+      const {pdfInfo, fechaIngreso, correosCopia , ...rest} = response.data
 
       let link = pdfInfo ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${pdfInfo}` : ''
+
 
       let formatFechaIngreso = parseISO(fechaIngreso)
 
       const payload = {
         ...rest,
         fechaIngreso: formatFechaIngreso,
-        pdfInfo: link
+        pdfInfo: link,
+        correosCopia
+        //correosCopia: correosCopia.join(',')
       }
-      console.log('payload', payload)
 
       return payload
   } catch (error) {

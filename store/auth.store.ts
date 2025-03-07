@@ -2,6 +2,9 @@ import { formsApi } from '@/lib/axios';
 import { AxiosError } from 'axios';
 import { create } from 'zustand';
 
+interface RolAuth {
+  nombre: string
+}
 interface AuthState {
   token: string | null;
   isLoading: boolean;
@@ -9,12 +12,13 @@ interface AuthState {
     id: number | null;
     nombre: string | null;
     email: string | null;
-    rol: string | null;
+    rol: RolAuth | null;
   } | null;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
+  initializeAuth: () => void; // Nueva función para inicializar el estado
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
@@ -22,12 +26,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   isLoading: false,
   error: null,
   user: null,
+
+  // Inicializar el estado desde localStorage
+  initializeAuth: () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (token && user) {
+      set({ token, user: JSON.parse(user) });
+    }
+  },
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      
       const response = await formsApi.post('auth/login', {
-         email, contraseña: password ,
+        email, contraseña: password,
       });
 
       if (!response) {
@@ -36,33 +50,47 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       const data = await response.data;
       set({ token: data.access_token, isLoading: false });
-      localStorage.setItem("token", data.access_token)
+
+      // Almacenar el token en localStorage
+      localStorage.setItem('token', data.access_token);
+
+      // Obtener y almacenar el perfil del usuario
+      await get().fetchProfile();
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
-        set({ error: error.response.data.message, isLoading: false });  
-      }else{
+        set({ error: error.response.data.message, isLoading: false });
+      } else {
         set({ error: (error as Error).message, isLoading: false });
       }
-      
     }
   },
+
   logout: () => {
-    set({ token: null });
-    localStorage.removeItem("token")
+    set({ token: null, user: null });
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   },
+
   fetchProfile: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await formsApi(`auth/profile`);
+      const response = await formsApi('auth/profile');
 
       if (!response) {
         throw new Error('Error al obtener el perfil');
       }
 
-      const profileData = await response;
-      set({ user: profileData.data, isLoading: false }); // Almacena los datos del perfil
+      const profileData = await response.data;
+      set({ user: profileData, isLoading: false });
+
+      // Almacenar los datos del usuario en localStorage
+      localStorage.setItem('user', JSON.stringify(profileData));
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      if (error instanceof AxiosError && error.response) {
+        set({ error: error.response.data.message, isLoading: false });
+      } else {
+        set({ error: (error as Error).message, isLoading: false });
+      }
     }
   },
 }));

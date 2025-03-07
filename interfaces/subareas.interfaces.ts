@@ -3,7 +3,7 @@ import { Area } from "./areas.interfaces";
 export interface SubArea {
     id: number;
     nombre: string;
-    areaResponsableId: number;
+    areaResponsableId: string;
     procedencia: string;
     jefatura: string;
     creadoPorId: number;
@@ -13,6 +13,6 @@ export interface SubArea {
 export interface CreateSubAreaDto {
     nombre: string;
     procedencia?: string;
-    areaResponsableId: number;
+    areaResponsableId: string;
     jefatura?: string;
 }

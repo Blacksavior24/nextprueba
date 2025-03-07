@@ -15,6 +15,7 @@ formsApi.interceptors.request.use(
         const token = await localStorage.getItem('token')
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`
+            console.log('dame el token prro', `Bearer ${token}`)
         }
 
         return config

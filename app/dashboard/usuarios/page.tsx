@@ -23,142 +23,130 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
-import React, { useEffect, useState, useCallback } from 'react';
-import useUsuariosStore from '@/store/usuarios.store'; // Store para usuarios
-import Swal from 'sweetalert2';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { CreateUsuarioDto, Usuario } from '@/interfaces/usuarios.interfaces'; // Importar interfaces
-import useAreasStore from '@/store/areas.store';
-import useSubAreasStore from '@/store/subareas.store';
-import useRolesStore from '@/store/roles.store';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCreateUser, useDeleteUser, useGetUsers, useUpdateUser } from '@/lib/queries/users.queries';
+import { useGetAreas } from '@/lib/queries/areas.queries';
+import { useGetSubAreas } from '@/lib/queries/subareas.queries';
+import { useGetRoles } from '@/lib/queries/roles.queries';
 
 const ITEMS_PER_PAGE = 8;
 
 export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debounceTerm, setDebounceTerm] = useState('')
+  const [searchBy, setSearchBy] = useState<string[]>(['nombre', 'email']); // Campos de búsqueda
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newUsuario, setNewUsuario] = useState<CreateUsuarioDto>({
     nombre: '',
     email: '',
-    apellidos: null,
+    apellidos: '',
     contraseña: '',
-    areaId: null,
-    subAreaId: null,
+    areaId: '',
+    subAreaId: '',
     rolId: '',
-    procedencia: null,
+    procedencia: '',
     tipoUsuario: 'user',
     jefe: 'no',
     creadoPorId: null,
   });
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
 
-  const { usuarios, loading, isUpdating, error, fetchUsuarios, updateUsuario, deleteUsuario, createUsuario } = useUsuariosStore();
-  const { areas, fetchAreas } = useAreasStore()
-  const { subareas, fetchSubAreas } = useSubAreasStore()
-  const { roles, fetchRoles } = useRolesStore()
+  const { data: usersResponse, isLoading, refetch, error } = useGetUsers(
+    currentPage,
+    ITEMS_PER_PAGE,
+    undefined,
+    debounceTerm,
+    searchBy
+  )
 
-  useEffect(() => {
-    fetchRoles();
-    fetchUsuarios(currentPage, ITEMS_PER_PAGE);
-    fetchAreas();
-    fetchSubAreas();
-  }, [fetchUsuarios, currentPage]);
+  const users = usersResponse?.data || [];
+  const totalPages = usersResponse?.meta.last_page || 1; // Usar meta.last_page directamente
 
-  const filteredUsuarios = usuarios.filter((usuario) =>
-    usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
-  const totalPages = Math.ceil(filteredUsuarios.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentUsuarios = filteredUsuarios.slice(startIndex, endIndex);
+  const { mutation: createUserMutation, AlertDialog: CreateAlertDialog } = useCreateUser();
+  const { mutation: updateUserMutation, AlertDialog: UpdateAlertDialog, } = useUpdateUser();
+  const { mutation: deleteUserMutation, AlertDialog: DeleteAlertDialog, } = useDeleteUser();
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const { data: areasResponse } = useGetAreas()
+  const { data: subareasResponse } = useGetSubAreas()
+  const { data: rolesResponse } = useGetRoles()
 
-  const handleCreateOrUpdateUsuario = useCallback(async () => {
-    if (!newUsuario.nombre || !newUsuario.email || !newUsuario.contraseña || !newUsuario.rolId || !newUsuario.areaId || !newUsuario.subAreaId) {
-      Swal.fire('Error', 'Nombre, email, contraseña, area, subarea y rol son requeridos', 'error');
-      return;
-    }
-      if (editingUsuario) {
-        await updateUsuario(editingUsuario.id, newUsuario);
-      } else {
-        await createUsuario(newUsuario);
-      }
+  const areas = areasResponse || []
+  const subareas = subareasResponse || []
+  const roles = rolesResponse || []
 
-      if (error) {
-        Swal.fire('Error', error, 'error');
-        return;
-    }
-    // Solo mostramos éxito si no hay errores
-    Swal.fire('¡Éxito!', editingUsuario ? 'El usuario se actualizó correctamente.' : 'El usuario se creó correctamente.', 'success');
-
-      setIsModalOpen(false);
-      setNewUsuario({
-        nombre: '',
-        email: '',
-        apellidos: null,
-        contraseña: '',
-        areaId: null,
-        subAreaId: null,
-        rolId: '',
-        procedencia: null,
-        tipoUsuario: 'user',
-        jefe: 'no',
-        creadoPorId: null,
-      });
-      setEditingUsuario(null);
-      fetchUsuarios(currentPage, ITEMS_PER_PAGE);
-    
-  }, [newUsuario, editingUsuario, updateUsuario, createUsuario, fetchUsuarios, currentPage]);
-
-  const handleEditClick = useCallback((usuario: Usuario) => {
-    setEditingUsuario(usuario);
-    setNewUsuario({
-      nombre: usuario.nombre,
-      email: usuario.email,
-      apellidos: usuario.apellidos,
-      contraseña: usuario.contraseña,
-      areaId: usuario.areaId,
-      subAreaId: usuario.subAreaId,
-      rolId: usuario.rolId,
-      procedencia: usuario.procedencia,
-      tipoUsuario: usuario.tipoUsuario,
-      jefe: usuario.jefe,
-      creadoPorId: usuario.creadoPorId,
-    });
-    setIsModalOpen(true);
-  }, []);
-
-  const handleDeleteUsuario = useCallback(async (id: string) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¡No podrás revertir esto!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-    })
-
-    if (result.isConfirmed) {
-      
-        await deleteUsuario(id);
-        
-        if (error) {
-          Swal.fire('Error', error, 'error');
-          return;
+  const handleCreateOrUpdateUsuario = async () => {
+    if (editingUsuario) {
+      // Actualizar usuario existente
+      updateUserMutation.mutate(
+        { id: editingUsuario.id, Data: newUsuario },
+        {
+          onSuccess: () => {
+            setIsModalOpen(false); // Cerrar el modal después de actualizar el usuario
+            setEditingUsuario(null); // Limpiar el estado de edición
+          },
         }
-
-        Swal.fire('¡Eliminado!', 'El usuario ha sido eliminado.', 'success');
-        fetchUsuarios(currentPage, ITEMS_PER_PAGE);
-      
+      );
+    } else {
+      // Crear un nuevo usuario (lógica anterior)
+      createUserMutation.mutate(newUsuario, {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setNewUsuario({
+            nombre: '',
+            email: '',
+            apellidos: '',
+            contraseña: '',
+            areaId: '',
+            subAreaId: '',
+            rolId: '',
+            procedencia: '',
+            tipoUsuario: 'user',
+            jefe: 'no',
+            creadoPorId: null,
+          });
+        },
+      });
     }
-  }, [deleteUsuario, fetchUsuarios, currentPage]);
+  };
+
+  const handleEditClick = (usuario: Usuario) => {
+    setNewUsuario(usuario)
+    setEditingUsuario(usuario);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteUsuario = (id: string) => {
+    deleteUserMutation.mutate(id);
+  };
+
+  const handleSearchByChange = (field: string) => {
+    setSearchBy((prev) =>
+        prev.includes(field)
+            ? prev.filter((f) => f !== field) // Remover si ya está seleccionado
+            : [...prev, field] // Agregar si no está seleccionado
+    );
+};
+const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter') {
+      setDebounceTerm(searchTerm)
+      setCurrentPage(1); // Reiniciar a la primera página al buscar
+      refetch(); // Volver a cargar los datos
+  }
+};
+
 
   return (
     <div className="container mx-auto px-10">
+      <CreateAlertDialog />
+      <UpdateAlertDialog />
+      <DeleteAlertDialog />
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
@@ -169,12 +157,12 @@ export default function Page() {
               setEditingUsuario(null); setNewUsuario({
                 nombre: '',
                 email: '',
-                apellidos: null,
+                apellidos: '',
                 contraseña: '',
-                areaId: null,
-                subAreaId: null,
+                areaId: '',
+                subAreaId: '',
                 rolId: '',
-                procedencia: null,
+                procedencia: '',
                 tipoUsuario: 'user',
                 jefe: 'no',
                 creadoPorId: null,
@@ -191,7 +179,28 @@ export default function Page() {
                 className="max-w-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearch}
               />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Buscar por
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {['nombre', 'email'].map((field) => (
+                    <DropdownMenuItem
+                      key={field}
+                      onSelect={() => handleSearchByChange(field)}
+                    >
+                      {field}
+                      {searchBy.includes(field) && (
+                        <span className="ml-2">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -210,7 +219,7 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center">
                   Cargando...
@@ -219,11 +228,11 @@ export default function Page() {
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-red-600">
-                  Error: {error}
+                  Error: No se pueden obtener los usuarios
                 </TableCell>
               </TableRow>
             ) : (
-              currentUsuarios.map((usuario) => (
+              users.map((usuario) => (
                 <TableRow key={usuario.id}>
                   <TableCell>{usuario.nombre}</TableCell>
                   <TableCell>{usuario.email}</TableCell>
@@ -242,8 +251,10 @@ export default function Page() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-blue-600"
-                          onClick={() => handleEditClick(usuario)}
-                          disabled={isUpdating}
+                          onClick={() =>
+                            handleEditClick(usuario)
+                          }
+                        //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -251,7 +262,7 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => handleDeleteUsuario(usuario.id)}
-                          disabled={isUpdating}
+                          disabled={deleteUserMutation.isPending}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -266,118 +277,151 @@ export default function Page() {
         </Table>
 
         {/* Modal para crear/editar usuario */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  {editingUsuario ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingUsuario ? "Editar Usuario" : "Agregar Nuevo Usuario"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nombre">Nombre</Label>
+                <Input
+                  id="nombre"
+                  value={newUsuario.nombre}
+                  onChange={(e) => setNewUsuario({ ...newUsuario, nombre: e.target.value })}
+                />
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Nombre</label>
-                  <Input
-                    value={newUsuario.nombre}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, nombre: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <Input
-                    type='email'
-                    value={newUsuario.email}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, email: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-                  <Input
-                    type="password"
-                    value={newUsuario.contraseña}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, contraseña: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Area</label>
-                  <select
-                    value={newUsuario.areaId || ''}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, areaId: e.target.value })}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="">Seleccione un Area</option>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUsuario.email}
+                  onChange={(e) => setNewUsuario({ ...newUsuario, email: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUsuario.contraseña}
+                  onChange={(e) => setNewUsuario({ ...newUsuario, contraseña: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="area">Area</Label>
+                <Select
+                  value={newUsuario.areaId}
+                  onValueChange={(value) => setNewUsuario({ ...newUsuario, areaId: value, subAreaId: "" })}
+                >
+                  <SelectTrigger id="area">
+                    <SelectValue placeholder="Seleccione un Area" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {areas.map((area) => (
-                      <option key={area.id} value={area.id}>
+                      <SelectItem key={area.id} value={String(area.id)}>
                         {area.nombre}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Sub Areas</label>
-                  <select
-                    value={newUsuario.subAreaId || ''}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, subAreaId: e.target.value })}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="">Seleccione una Sub Area</option>
-                    {subareas.filter((subareas)=>String(subareas.areaResponsableId) === newUsuario.areaId).map((subarea) => (
-                      <option key={subarea.id} value={subarea.id}>
-                        {subarea.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Rol</label>
-                  <select
-                    value={newUsuario.rolId || ''}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, rolId: e.target.value })}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="">Seleccione un rol</option>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="subarea">Sub Areas</Label>
+                <Select
+                  value={newUsuario.subAreaId}
+                  onValueChange={(value) => setNewUsuario({ ...newUsuario, subAreaId: value })}
+                  disabled={!newUsuario.areaId}
+                >
+                  <SelectTrigger id="subarea">
+                    <SelectValue placeholder="Seleccione una Sub Area" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subareas
+                      .filter((subarea) => String(subarea.areaResponsableId) === newUsuario.areaId)
+                      .map((subarea) => (
+                        <SelectItem key={subarea.id} value={String(subarea.id)}>
+                          {subarea.nombre}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rol">Rol</Label>
+                <Select value={newUsuario.rolId} onValueChange={(value) => setNewUsuario({ ...newUsuario, rolId: value })}>
+                  <SelectTrigger id="rol">
+                    <SelectValue placeholder="Seleccione un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {roles.map((rol) => (
-                      <option key={rol.id} value={rol.id}>
+                      <SelectItem key={rol.id} value={String(rol.id)}>
                         {rol.nombre}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Tipo de Usuario</label>
-                  <select
-                    value={newUsuario.tipoUsuario}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, tipoUsuario: e.target.value as "admin" | "user" })}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="user">Usuario</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">¿Es jefe?</label>
-                  <select
-                    value={newUsuario.jefe}
-                    onChange={(e) => setNewUsuario({ ...newUsuario, jefe: e.target.value as "si" | "no" })}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="no">No</option>
-                    <option value="si">Sí</option>
-                  </select>
-                </div>
-                <Button onClick={handleCreateOrUpdateUsuario} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingUsuario ? 'Guardar Cambios' : 'Guardar'}
-                </Button>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tipoUsuario">Tipo de Usuario</Label>
+                <Select
+                  value={newUsuario.tipoUsuario}
+                  onValueChange={(value) =>
+                    setNewUsuario({
+                      ...newUsuario,
+                      tipoUsuario: value as "admin" | "user",
+                    })
+                  }
+                >
+                  <SelectTrigger id="tipoUsuario">
+                    <SelectValue placeholder="Seleccione tipo de usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuario</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="jefe">¿Es jefe?</Label>
+                <Select
+                  value={newUsuario.jefe}
+                  onValueChange={(value) =>
+                    setNewUsuario({
+                      ...newUsuario,
+                      jefe: value as "si" | "no",
+                    })
+                  }
+                >
+                  <SelectTrigger id="jefe">
+                    <SelectValue placeholder="Seleccione si es jefe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="si">Sí</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={handleCreateOrUpdateUsuario}
+                disabled={createUserMutation.isPending || updateUserMutation.isPending}
+              >
+                {createUserMutation.isPending || updateUserMutation.isPending
+                  ? "Guardando..."
+                  : editingUsuario
+                    ? "Guardar Cambios"
+                    : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
+
         <div className="p-4 border-t">
           <Pagination>
             <PaginationContent>
@@ -392,7 +436,7 @@ export default function Page() {
                 />
               </PaginationItem>
 
-              {pageNumbers.map((pageNumber) => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
                 <PaginationItem key={pageNumber}>
                   <PaginationLink
                     href="#"

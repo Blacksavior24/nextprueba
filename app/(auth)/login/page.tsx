@@ -33,7 +33,14 @@ export default function Page(){
   
   
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4">
+      <div 
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4"
+        style={{
+          backgroundImage: `url('cartas.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Iniciar sesión</CardTitle>
@@ -70,13 +77,7 @@ export default function Page(){
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-  
-            {/* <Link href="/dashboard">  
-              
-                <Button className="w-full mt-4" disabled={isLoading}>
-                  {isLoading ? 'Cargando' : 'Iniciar sesión'}
-                </Button>
-            </Link> */}
+
             <Button className="w-full mt-4" disabled={isLoading}>
                   {isLoading ? <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

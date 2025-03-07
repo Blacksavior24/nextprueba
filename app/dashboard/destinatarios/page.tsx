@@ -24,10 +24,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'; // Importamos el ícono X
-import React, { useEffect, useState, useCallback } from 'react';
-import Swal from 'sweetalert2';
-import useDestinatariosStore from '@/store/destinatarios.store';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'; // Importamos el ícono X
+import React, { useState } from 'react';
+import { CreateDestinatarioDto, Destinatario } from '@/interfaces/destinatarios.interfaces';
+import { useCreateReceiver, useDeleteReceiver, useGetReceiver, useUpdateReceiver } from '@/lib/queries/receivers.queries';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -35,24 +38,20 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newDestinatarioName, setNewDestinatarioName] = useState('');
-  const [newDestinatarioTipodoc, setNewDestinatarioTipodoc] = useState('');
-  const [newDestinatarioNumdoc, setNewDestinatarioNumdoc] = useState('');
+  const [newDestinatario, setNewDestinatario] = useState<CreateDestinatarioDto>({
+    nombre: '',
+    numdoc: '',
+    tipodoc: ''
+  })
 
-  const [editingDestinatario, setEditingDestinatario] = useState<{ id: number; nombre: string } | null>(null);
+  const [editingDestinatario, setEditingDestinatario] = useState<Destinatario | null>(null);
+  const { data: destinatariosResponse, isLoading, error } = useGetReceiver()
 
-  const { destinatarios, isLoading, isUpdating, error, fetchDestinatarios, updateDestinatario, deleteDestinatario, createDestinatario } = useDestinatariosStore();
-
-
-  
-  useEffect(() => {
-    fetchDestinatarios();
-  }, [fetchDestinatarios, currentPage]);
+  const destinatarios = destinatariosResponse || [];
 
   const filteredDestinatarios = destinatarios?.filter((dest) =>
     dest.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
   const totalPages = Math.ceil(filteredDestinatarios?.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -60,63 +59,50 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const handleCreateOrUpdateDestinatario = useCallback(async () => {
-    if (!newDestinatarioName) {
-      Swal.fire('Error', 'El nombre del Destinatario es requerido', 'error');
-      return;
-    }
-      if (editingDestinatario) {
-        await updateDestinatario(editingDestinatario.id, { nombre: newDestinatarioName, tipodoc: newDestinatarioTipodoc, numdoc: newDestinatarioNumdoc });
-        
-      } else {
-        await createDestinatario({ nombre: newDestinatarioName, tipodoc: newDestinatarioTipodoc, numdoc: newDestinatarioNumdoc });
+  const { mutation: createDestinatarioMutation , AlertDialog: CreateAlertDialog} = useCreateReceiver()
+  const { mutation: updateDestinatarioMutation , AlertDialog: UpdateAlertDialog} = useUpdateReceiver()
+  const { mutation: deleteDestinatarioMutation , AlertDialog: DeleteAlertDialog} = useDeleteReceiver()
+
+  const handleCreateOrUpdateDestinatario = async () => {
+   if (editingDestinatario) {
+    updateDestinatarioMutation.mutate(
+      { id: String(editingDestinatario.id), Data: newDestinatario },
+      {
+        onSuccess: () => {
+          setIsModalOpen(false)
+          setEditingDestinatario(null)
+        }
       }
-      if (error) {
-        Swal.fire('Error', error, 'error');
-        return;
-      }      
+    )
+   }else{
+    createDestinatarioMutation.mutate(newDestinatario, {
+      onSuccess: () => {
+        setIsModalOpen(false)
+        setNewDestinatario({
+          nombre: '',
+          numdoc: '',
+          tipodoc: ''
+        })
+      }
+    })
+   }
+  }
 
-      Swal.fire('¡Éxito!', editingDestinatario ? 'El destinatario se actualizó correctamente.' : 'El destinatario se creó correctamente.', 'success');
-
-      setIsModalOpen(false); // Cerrar el modal
-      setNewDestinatarioName('');
-      setNewDestinatarioTipodoc('');
-      setNewDestinatarioNumdoc('');
-      setEditingDestinatario(null);
-      fetchDestinatarios(); // Recargar la lista de Destinatarios
-    
-  }, [newDestinatarioName, editingDestinatario, updateDestinatario, createDestinatario, fetchDestinatarios]);
-
-  const handleEditClick = useCallback((Destinatario: { id: number; nombre: string }) => {
-    setEditingDestinatario(Destinatario);
-    setNewDestinatarioName(Destinatario.nombre);
+  const handleEditClick = (destinatario: Destinatario) => {
+    setEditingDestinatario(destinatario);
+    setNewDestinatario(destinatario);
     setIsModalOpen(true); // Abrir el modal
-  }, []);
+  }
 
-  const handleDeleteDestinatario = useCallback(async (id: number) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¡No podrás revertir esto!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deleteDestinatario(id);
-        Swal.fire('¡Eliminado!', 'El Destinatario ha sido eliminado.', 'success');
-        fetchDestinatarios();
-      } catch (error) {
-        Swal.fire('Error', `Hubo un problema al eliminar el Destinatario. ${error}`, 'error');
-      }
-    }
-  }, [deleteDestinatario, fetchDestinatarios]);
+  const handleDeleteDestinatario = async (id: string) => {
+    deleteDestinatarioMutation.mutate(id)
+  }
 
   return (
     <div className="container mx-auto px-10">
+      <CreateAlertDialog />
+      <UpdateAlertDialog />
+      <DeleteAlertDialog />
       <div className="rounded-md border">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-center mb-6">
@@ -124,7 +110,14 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { setEditingDestinatario(null); setNewDestinatarioName(''); setIsModalOpen(true); }}>
+            <Button onClick={() => { 
+              setEditingDestinatario(null); 
+              setNewDestinatario({
+                nombre: '',
+                numdoc: '',
+                tipodoc: ''
+              }); 
+              setIsModalOpen(true); }}>
               Agregar Destinatario
             </Button>
 
@@ -160,7 +153,7 @@ export default function Page() {
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-red-600">
-                  Error: {error}
+                  Error: No se puede obtener los destinatarios
                 </TableCell>
               </TableRow>
             ) : (
@@ -180,15 +173,14 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(Destinatario)}
-                          disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteDestinatario(Destinatario.id)}
-                          disabled={isUpdating}
+                          onClick={() => handleDeleteDestinatario(String(Destinatario.id))}
+                          disabled={deleteDestinatarioMutation.isPending}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -203,48 +195,59 @@ export default function Page() {
         </Table>
 
         {/* Modal personalizado con Tailwind CSS */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  {editingDestinatario ? 'Editar Destinatario' : 'Agregar Nuevo Destinatario'}
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)} // Cerrar el modal
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="space-y-4">
-              <select
-                  value={newDestinatarioTipodoc || ''}
-                  onChange={(e) => setNewDestinatarioTipodoc(e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="">Seleccione un área responsable</option>
-                  <option value="DNI">DNI</option>
-                  <option value="RUC">RUC</option>
-                  <option value="SIN DOCUMENTO">SIN DOCUMENTO</option>
-                </select>
-                <Input
-                  placeholder="Número de Documento"
-                  value={newDestinatarioNumdoc}
-                  onChange={(e) => setNewDestinatarioNumdoc(e.target.value)}
-                />
-                <Input
-                  placeholder="Nombre del Destinatario"
-                  value={newDestinatarioName}
-                  onChange={(e) => setNewDestinatarioName(e.target.value)}
-                />
-                <Button onClick={handleCreateOrUpdateDestinatario} disabled={isUpdating}>
-                  {isUpdating ? 'Guardando...' : editingDestinatario ? 'Guardar Cambios' : 'Guardar'}
-                </Button>
+
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>{editingDestinatario?'Editar Destinatario':'Nuevo Destinatario'}</DialogTitle>
+            </DialogHeader>
+            <div className='grid gap-4 py-4'>
+            <div className="grid gap-2">
+              <Label htmlFor='tipodoc'>Tipo de Documento</Label>
+            <Select value={newDestinatario.tipodoc} onValueChange={(value) => setNewDestinatario({ ...newDestinatario, tipodoc: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar el tipo de Documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DNI">DNI</SelectItem>
+                <SelectItem value="RUC">RUC</SelectItem>
+                <SelectItem value="SIN_DOCUMENTO">SIN DOCUMENTO</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor='numdoc'>Numero de Documento</Label>
+            <Input
+              placeholder="Numero Documento"
+              value={newDestinatario.numdoc}
+              onChange={(e) => setNewDestinatario({ ...newDestinatario, numdoc: e.target.value })}
+            />
+          </div>
+            <div className='grid gap-2'>
+                  <Label htmlFor='nombre'>Nombre</Label>
+                  <Input
+                    id='nombre'
+                    value={newDestinatario.nombre}
+                    onChange={(e)=> setNewDestinatario({...newDestinatario, nombre: e.target.value})}
+                  />
               </div>
             </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={handleCreateOrUpdateDestinatario}
+                disabled={createDestinatarioMutation.isPending || updateDestinatarioMutation.isPending}
+              >
+                {createDestinatarioMutation.isPending || updateDestinatarioMutation.isPending
+                ? "Guardando"
+                : editingDestinatario
+                ? "Guardar Cambios"
+                : "Guardar"
+                }
+
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
 

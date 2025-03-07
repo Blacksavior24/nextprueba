@@ -3,7 +3,7 @@ import { AssignForm } from "@/components/Asignar-form";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGetCards } from "@/lib/queries/cards.queries";
 import { FolderDown, MoreHorizontal, Pencil, RefreshCcw } from "lucide-react";
@@ -14,24 +14,37 @@ const ITEMS_PER_PAGE = 8;
 export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debounceTerm, setDebounceTerm] = useState('')
+  const [searchBy, setSearchBy] = useState<string[]>(['codigoRecibido', 'destinatario', 'asunto']); // Campos de búsqueda
   const [openEdit, setOpenEdit] = useState(false);
   const [select, setSelect] = useState('');
-  const {data: cards, isLoading, refetch, error } = useGetCards()
-
-  const filteredCards = cards?.filter((card) =>
-    card.codigoRecibido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    card.destinatario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    card.asunto.toLowerCase().includes(searchTerm.toLowerCase())
+  const { data: cardsResponse, isLoading, refetch, error } = useGetCards(
+    currentPage,
+    ITEMS_PER_PAGE,
+    undefined, // Filtros (opcional)
+    debounceTerm,
+    searchBy
   );
 
-  const filteredCardsSafe = filteredCards || [];
+  const cards = cardsResponse?.data || [];
+  const totalPages = cardsResponse?.meta.last_page || 1; // Usar meta.last_page directamente
 
-  const totalPages = Math.ceil(filteredCardsSafe.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentCards = filteredCardsSafe.slice(startIndex, endIndex);
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        setDebounceTerm(searchTerm)
+        setCurrentPage(1); // Reiniciar a la primera página al buscar
+        refetch(); // Volver a cargar los datos
+    }
+};
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  // Cambiar los campos de búsqueda
+  const handleSearchByChange = (field: string) => {
+      setSearchBy((prev) =>
+          prev.includes(field)
+              ? prev.filter((f) => f !== field) // Remover si ya está seleccionado
+              : [...prev, field] // Agregar si no está seleccionado
+      );
+  };
 
   return (
     <div className="container mx-auto px-10">
@@ -41,19 +54,40 @@ export default function Page() {
             Pendientes
           </h2>
           <div className="flex justify-between items-center mb-4">
-              <Button onClick={() => {refetch(); console.log("actualiza modo sync");}}>
-                <RefreshCcw />
-              </Button>
-              <div className="flex items-center gap-2">
-                <span>Buscar:</span>
-                <Input
-                  type="search"
-                  placeholder="Buscar..."
-                  className="max-w-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            <Button onClick={() => { refetch(); console.log("actualiza modo sync"); }}>
+              <RefreshCcw />
+            </Button>
+            <div className="flex items-center gap-2">
+                            <span>Buscar:</span>
+                            <Input
+                                type="search"
+                                placeholder="Buscar..."
+                                className="max-w-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={handleSearch} // Buscar al presionar Enter
+                            />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        Buscar por
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    {['codigoRecibido', 'destinatario', 'asunto'].map((field) => (
+                                        <DropdownMenuItem
+                                            key={field}
+                                            onSelect={() => handleSearchByChange(field)}
+                                        >
+                                            {field}
+                                            {searchBy.includes(field) && (
+                                                <span className="ml-2">✓</span>
+                                            )}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
           </div>
         </div>
         <Table>
@@ -75,7 +109,7 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-          {isLoading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center">
                   Cargando...
@@ -88,24 +122,24 @@ export default function Page() {
                 </TableCell>
               </TableRow>
             ) : (
-              currentCards.map((card) => (
+              cards.map((card) => (
                 <TableRow key={card.id}>
                   <TableCell>{card.codigoRecibido || '-'}</TableCell>
                   <TableCell>{card.fechaIngreso?.toString() || '-'}</TableCell>
                   <TableCell>{card.destinatario}</TableCell>
                   <TableCell>{card.asunto}</TableCell>
                   <TableCell>
-                      <Button asChild >
-                        <a href={card.pdfInfo} target="_blank" rel="noopener noreferrer">
-                          <FolderDown />
-                        </a>
-                      </Button>
+                    <Button asChild >
+                      <a href={card.pdfInfo} target="_blank" rel="noopener noreferrer">
+                        <FolderDown />
+                      </a>
+                    </Button>
                   </TableCell>
                   <TableCell>{card.empresa?.nombre || '-'}</TableCell>
                   <TableCell>{card.areaResponsable?.nombre || '-'}</TableCell>
                   <TableCell>{card.subArea?.nombre || '-'}</TableCell>
-                  <TableCell>{card.informativo?'SI':'NO'}</TableCell>
-                  <TableCell>{card.fechaIngreso?'En plazo':'Fuera de plazo'}</TableCell>
+                  <TableCell>{card.informativo ? 'SI' : 'NO'}</TableCell>
+                  <TableCell>{card.fechaIngreso ? 'En plazo' : 'Fuera de plazo'}</TableCell>
                   <TableCell>{card.fechadevencimiento?.toString() || '-'}</TableCell>
                   <TableCell>{card.devuelto}</TableCell>
                   <TableCell className="text-right">
@@ -118,8 +152,8 @@ export default function Page() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="text-blue-600"
-                          onClick={() =>{setOpenEdit(true); setSelect(card.id)}}
-                          //disabled={isUpdating}
+                          onClick={() => { setOpenEdit(true); setSelect(card.id) }}
+                        //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -155,38 +189,20 @@ export default function Page() {
                 />
               </PaginationItem>
 
-              {pageNumbers.map((pageNumber) => {
-                if (
-                  pageNumber === 1 ||
-                  pageNumber === totalPages ||
-                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                ) {
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setCurrentPage(pageNumber);
-                        }}
-                        isActive={currentPage === pageNumber}
-                      >
-                        {pageNumber}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                } else if (
-                  pageNumber === currentPage - 2 ||
-                  pageNumber === currentPage + 2
-                ) {
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  );
-                }
-                return null;
-              })}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                <PaginationItem key={pageNumber}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(pageNumber);
+                    }}
+                    isActive={currentPage === pageNumber}
+                  >
+                    {pageNumber}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
 
               <PaginationItem>
                 <PaginationNext
@@ -195,9 +211,7 @@ export default function Page() {
                     e.preventDefault();
                     setCurrentPage((page) => Math.min(totalPages, page + 1));
                   }}
-                  className={
-                    currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
-                  }
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
             </PaginationContent>

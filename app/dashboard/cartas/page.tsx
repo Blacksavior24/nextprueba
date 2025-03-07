@@ -1,59 +1,74 @@
-"use client"
+"use client";
 
-import { AssignForm } from "@/components/Asignar-form"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useGetCards } from "@/lib/queries/cards.queries"
-import { DropdownMenu } from "@radix-ui/react-dropdown-menu"
-import { FolderDown, MoreHorizontal, Pencil, PlusSquare, RefreshCcw, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { AssignForm } from "@/components/Asignar-form";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useGetCards } from "@/lib/queries/cards.queries";
+import { DropdownMenu } from "@radix-ui/react-dropdown-menu";
+import { FolderDown, MoreHorizontal, Pencil, PlusSquare, RefreshCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 
-const ITEMS_PER_PAGE = 8
+const ITEMS_PER_PAGE = 8;
 
 export default function Page() {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debounceTerm, setDebounceTerm] = useState('')
+    const [searchBy, setSearchBy] = useState<string[]>(['codigoRecibido', 'destinatario', 'asunto']); // Campos de búsqueda
     const [openEdit, setOpenEdit] = useState(false);
     const [select, setSelect] = useState('');
-    const { data: cards, isLoading, refetch, error } = useGetCards()
-
-    const filteredCards = cards?.filter((card) =>
-        card.codigoRecibido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.destinatario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.asunto.toLowerCase().includes(searchTerm.toLowerCase())
+    // Usar useGetCards con paginación y búsqueda
+    const { data: cardsResponse, isLoading, refetch, error } = useGetCards(
+        currentPage,
+        ITEMS_PER_PAGE,
+        {"estado":"Ingresado"}, // Filtros (opcional)
+        debounceTerm,
+        searchBy
     );
 
-    const filteredCardsSafe = filteredCards || [];
+    const cards = cardsResponse?.data || [];
+    const totalPages = cardsResponse?.meta.last_page || 1; // Usar meta.last_page directamente
 
-    const totalPages = Math.ceil(filteredCardsSafe.length / ITEMS_PER_PAGE);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const currentCards = filteredCardsSafe.slice(startIndex, endIndex);
+    // Manejar la búsqueda al presionar Enter
+    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            setDebounceTerm(searchTerm)
+            setCurrentPage(1); // Reiniciar a la primera página al buscar
+            refetch(); // Volver a cargar los datos
+        }
+    };
 
-    const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+    // Cambiar los campos de búsqueda
+    const handleSearchByChange = (field: string) => {
+        setSearchBy((prev) =>
+            prev.includes(field)
+                ? prev.filter((f) => f !== field) // Remover si ya está seleccionado
+                : [...prev, field] // Agregar si no está seleccionado
+        );
+    };
 
     const getStatusColor = (estado: string) => {
         switch (estado.toLowerCase()) {
             case "ingresado":
-                return "bg-green-100 text-green-800 border-green-300"
+                return "bg-green-100 text-green-800 border-green-300";
             case "pendiente":
-                return "bg-yellow-100 text-yellow-800 border-yellow-300"
-            case "inactivo":
-                return "bg-red-100 text-red-800 border-red-300"
+                return "bg-yellow-100 text-yellow-800 border-yellow-300";
+            case "cerrado":
+                return "bg-red-100 text-red-800 border-red-300";
             default:
-                return "bg-gray-100 text-gray-800 border-gray-300"
+                return "bg-gray-100 text-gray-800 border-gray-300";
         }
-    }
+    };
 
     return (
         <div className="container mx-auto px-10">
             <div className="rounded-md border">
                 <div className="p-4">
-                    <h2 className="text 2xl font-semibold text-center">
+                    <h2 className="text-2xl font-semibold text-center">
                         Control de Cartas
                     </h2>
                     <div className="flex justify-between items-center mb-4">
@@ -61,7 +76,7 @@ export default function Page() {
                             <Button onClick={() => refetch()}>
                                 <RefreshCcw />
                             </Button>
-                            <Button onClick={() => setOpenEdit(true)}>
+                            <Button onClick={() => { setSelect('');  setOpenEdit(true)}}>
                                 <PlusSquare />
                                 Crear Carta
                             </Button>
@@ -73,8 +88,29 @@ export default function Page() {
                                 placeholder="Buscar..."
                                 className="max-w-sm"
                                 value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={handleSearch} // Buscar al presionar Enter
                             />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        Buscar por
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    {['codigoRecibido', 'destinatario', 'asunto'].map((field) => (
+                                        <DropdownMenuItem
+                                            key={field}
+                                            onSelect={() => handleSearchByChange(field)}
+                                        >
+                                            {field}
+                                            {searchBy.includes(field) && (
+                                                <span className="ml-2">✓</span>
+                                            )}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                 </div>
@@ -94,18 +130,18 @@ export default function Page() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={2} className="text-center">
+                                <TableCell colSpan={8} className="text-center">
                                     Cargando...
                                 </TableCell>
                             </TableRow>
                         ) : error ? (
                             <TableRow>
-                                <TableCell colSpan={2} className="text-center text-red-600">
+                                <TableCell colSpan={8} className="text-center text-red-600">
                                     Error: No se puede obtener las cartas
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            currentCards.map((card) => (
+                            cards.map((card) => (
                                 <TableRow key={card.id}>
                                     <TableCell>{card.codigoRecibido}</TableCell>
                                     <TableCell>{card.destinatario}</TableCell>
@@ -124,7 +160,10 @@ export default function Page() {
                                         </Button>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={card.devuelto ? "default" : "secondary"}>{card.devuelto ? "SI" : "NO"}</Badge></TableCell>
+                                        <Badge variant={card.devuelto ? "default" : "secondary"}>
+                                            {card.devuelto ? "SI" : "NO"}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell>
                                         <Badge className={`${getStatusColor(card.estado)} px-2 py-1 rounded-full text-xs font-semibold`}>
                                             {card.estado}
@@ -133,7 +172,7 @@ export default function Page() {
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h8 w-8 p-0">
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -147,8 +186,6 @@ export default function Page() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-red-600"
-                                                //onClick={() => handleDeleteEmpresa(empresa.id)}
-                                                //disabled={isUpdating}
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     Eliminar
@@ -158,8 +195,7 @@ export default function Page() {
                                     </TableCell>
                                 </TableRow>
                             ))
-                        )
-                        }
+                        )}
                     </TableBody>
                 </Table>
 
@@ -177,38 +213,20 @@ export default function Page() {
                                 />
                             </PaginationItem>
 
-                            {pageNumbers.map((pageNumber) => {
-                                if (
-                                    pageNumber === 1 ||
-                                    pageNumber === totalPages ||
-                                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                                ) {
-                                    return (
-                                        <PaginationItem key={pageNumber}>
-                                            <PaginationLink
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setCurrentPage(pageNumber);
-                                                }}
-                                                isActive={currentPage === pageNumber}
-                                            >
-                                                {pageNumber}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    );
-                                } else if (
-                                    pageNumber === currentPage - 2 ||
-                                    pageNumber === currentPage + 2
-                                ) {
-                                    return (
-                                        <PaginationItem key={pageNumber}>
-                                            <PaginationEllipsis />
-                                        </PaginationItem>
-                                    );
-                                }
-                                return null;
-                            })}
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                                <PaginationItem key={pageNumber}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setCurrentPage(pageNumber);
+                                        }}
+                                        isActive={currentPage === pageNumber}
+                                    >
+                                        {pageNumber}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            ))}
 
                             <PaginationItem>
                                 <PaginationNext
@@ -217,9 +235,7 @@ export default function Page() {
                                         e.preventDefault();
                                         setCurrentPage((page) => Math.min(totalPages, page + 1));
                                     }}
-                                    className={
-                                        currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
-                                    }
+                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                                 />
                             </PaginationItem>
                         </PaginationContent>
@@ -231,8 +247,7 @@ export default function Page() {
                     onOpenChange={setOpenEdit}
                     id={select}
                 />
-
             </div>
         </div>
-    )
+    );
 }
