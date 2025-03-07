@@ -130,8 +130,11 @@ export default function Page() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center">
-                                    Cargando...
+                                <TableCell colSpan={10} className="text-center py-8">
+                                    <div className="flex justify-center items-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <span className="ml-2">Cargando...</span>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : error ? (

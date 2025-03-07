@@ -128,18 +128,18 @@ export default function Page() {
 
   const handleSearchByChange = (field: string) => {
     setSearchBy((prev) =>
-        prev.includes(field)
-            ? prev.filter((f) => f !== field) // Remover si ya está seleccionado
-            : [...prev, field] // Agregar si no está seleccionado
+      prev.includes(field)
+        ? prev.filter((f) => f !== field) // Remover si ya está seleccionado
+        : [...prev, field] // Agregar si no está seleccionado
     );
-};
-const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter') {
+  };
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       setDebounceTerm(searchTerm)
       setCurrentPage(1); // Reiniciar a la primera página al buscar
       refetch(); // Volver a cargar los datos
-  }
-};
+    }
+  };
 
 
   return (
@@ -221,8 +221,11 @@ const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (

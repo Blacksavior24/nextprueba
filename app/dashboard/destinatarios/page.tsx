@@ -59,33 +59,33 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createDestinatarioMutation , AlertDialog: CreateAlertDialog} = useCreateReceiver()
-  const { mutation: updateDestinatarioMutation , AlertDialog: UpdateAlertDialog} = useUpdateReceiver()
-  const { mutation: deleteDestinatarioMutation , AlertDialog: DeleteAlertDialog} = useDeleteReceiver()
+  const { mutation: createDestinatarioMutation, AlertDialog: CreateAlertDialog } = useCreateReceiver()
+  const { mutation: updateDestinatarioMutation, AlertDialog: UpdateAlertDialog } = useUpdateReceiver()
+  const { mutation: deleteDestinatarioMutation, AlertDialog: DeleteAlertDialog } = useDeleteReceiver()
 
   const handleCreateOrUpdateDestinatario = async () => {
-   if (editingDestinatario) {
-    updateDestinatarioMutation.mutate(
-      { id: String(editingDestinatario.id), Data: newDestinatario },
-      {
+    if (editingDestinatario) {
+      updateDestinatarioMutation.mutate(
+        { id: String(editingDestinatario.id), Data: newDestinatario },
+        {
+          onSuccess: () => {
+            setIsModalOpen(false)
+            setEditingDestinatario(null)
+          }
+        }
+      )
+    } else {
+      createDestinatarioMutation.mutate(newDestinatario, {
         onSuccess: () => {
           setIsModalOpen(false)
-          setEditingDestinatario(null)
+          setNewDestinatario({
+            nombre: '',
+            numdoc: '',
+            tipodoc: ''
+          })
         }
-      }
-    )
-   }else{
-    createDestinatarioMutation.mutate(newDestinatario, {
-      onSuccess: () => {
-        setIsModalOpen(false)
-        setNewDestinatario({
-          nombre: '',
-          numdoc: '',
-          tipodoc: ''
-        })
-      }
-    })
-   }
+      })
+    }
   }
 
   const handleEditClick = (destinatario: Destinatario) => {
@@ -110,14 +110,15 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingDestinatario(null); 
+            <Button onClick={() => {
+              setEditingDestinatario(null);
               setNewDestinatario({
                 nombre: '',
                 numdoc: '',
                 tipodoc: ''
-              }); 
-              setIsModalOpen(true); }}>
+              });
+              setIsModalOpen(true);
+            }}>
               Agregar Destinatario
             </Button>
 
@@ -146,8 +147,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -199,37 +203,37 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>{editingDestinatario?'Editar Destinatario':'Nuevo Destinatario'}</DialogTitle>
+              <DialogTitle>{editingDestinatario ? 'Editar Destinatario' : 'Nuevo Destinatario'}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
-            <div className="grid gap-2">
-              <Label htmlFor='tipodoc'>Tipo de Documento</Label>
-            <Select value={newDestinatario.tipodoc} onValueChange={(value) => setNewDestinatario({ ...newDestinatario, tipodoc: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar el tipo de Documento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DNI">DNI</SelectItem>
-                <SelectItem value="RUC">RUC</SelectItem>
-                <SelectItem value="SIN_DOCUMENTO">SIN DOCUMENTO</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor='numdoc'>Numero de Documento</Label>
-            <Input
-              placeholder="Numero Documento"
-              value={newDestinatario.numdoc}
-              onChange={(e) => setNewDestinatario({ ...newDestinatario, numdoc: e.target.value })}
-            />
-          </div>
-            <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newDestinatario.nombre}
-                    onChange={(e)=> setNewDestinatario({...newDestinatario, nombre: e.target.value})}
-                  />
+              <div className="grid gap-2">
+                <Label htmlFor='tipodoc'>Tipo de Documento</Label>
+                <Select value={newDestinatario.tipodoc} onValueChange={(value) => setNewDestinatario({ ...newDestinatario, tipodoc: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar el tipo de Documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DNI">DNI</SelectItem>
+                    <SelectItem value="RUC">RUC</SelectItem>
+                    <SelectItem value="SIN_DOCUMENTO">SIN DOCUMENTO</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor='numdoc'>Numero de Documento</Label>
+                <Input
+                  placeholder="Numero Documento"
+                  value={newDestinatario.numdoc}
+                  onChange={(e) => setNewDestinatario({ ...newDestinatario, numdoc: e.target.value })}
+                />
+              </div>
+              <div className='grid gap-2'>
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newDestinatario.nombre}
+                  onChange={(e) => setNewDestinatario({ ...newDestinatario, nombre: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -238,10 +242,10 @@ export default function Page() {
                 disabled={createDestinatarioMutation.isPending || updateDestinatarioMutation.isPending}
               >
                 {createDestinatarioMutation.isPending || updateDestinatarioMutation.isPending
-                ? "Guardando"
-                : editingDestinatario
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingDestinatario
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
 
               </Button>

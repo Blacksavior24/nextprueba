@@ -38,11 +38,11 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newRol, setNewRol] = useState<CreateRolDto>({
-      nombre: '',
-    })
+    nombre: '',
+  })
   const [editingRole, setEditingRole] = useState<Rol | null>(null);
 
-  const { data: rolesResponse, isLoading, error} = useGetRoles()
+  const { data: rolesResponse, isLoading, error } = useGetRoles()
 
   const roles = rolesResponse || [];
 
@@ -57,14 +57,14 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createRolMutation , AlertDialog: CreateAlertDialog} = useCreateRol()
-  const { mutation: updateRolMutation , AlertDialog: UpdateAlertDialog} = useUpdateRol()
-  const { mutation: deleteRolMutation , AlertDialog: DeleteAlertDialog} = useDeleteRol()
-  
+  const { mutation: createRolMutation, AlertDialog: CreateAlertDialog } = useCreateRol()
+  const { mutation: updateRolMutation, AlertDialog: UpdateAlertDialog } = useUpdateRol()
+  const { mutation: deleteRolMutation, AlertDialog: DeleteAlertDialog } = useDeleteRol()
+
   const handleCreateOrUpdateRol = async () => {
     if (editingRole) {
       updateRolMutation.mutate(
-        { id: String(editingRole.id), Data: newRol},
+        { id: String(editingRole.id), Data: newRol },
         {
           onSuccess: () => {
             setIsModalOpen(false);
@@ -72,16 +72,16 @@ export default function Page() {
           }
         }
       )
-     } else {
-        createRolMutation.mutate(newRol, {
-          onSuccess: () => {
-            setIsModalOpen(false);
-            setNewRol({
-              nombre: ''
-            })
-          }
-        })
-     }
+    } else {
+      createRolMutation.mutate(newRol, {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setNewRol({
+            nombre: ''
+          })
+        }
+      })
+    }
   }
 
   const handleEditClick = (rol: Rol) => {
@@ -106,13 +106,13 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingRole(null); 
+            <Button onClick={() => {
+              setEditingRole(null);
               setNewRol({
                 nombre: ''
               })
-              setIsModalOpen(true); 
-              }}>
+              setIsModalOpen(true);
+            }}>
               Agregar Rol
             </Button>
 
@@ -139,8 +139,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -189,16 +192,16 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>{editingRole?'Editar Rol':'Nuevo Rol'}</DialogTitle>
+              <DialogTitle>{editingRole ? 'Editar Rol' : 'Nuevo Rol'}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
-            <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newRol.nombre}
-                    onChange={(e)=> setNewRol({...newRol, nombre: e.target.value})}
-                  />
+              <div className='grid gap-2'>
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newRol.nombre}
+                  onChange={(e) => setNewRol({ ...newRol, nombre: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -207,10 +210,10 @@ export default function Page() {
                 disabled={createRolMutation.isPending || updateRolMutation.isPending}
               >
                 {createRolMutation.isPending || updateRolMutation.isPending
-                ? "Guardando"
-                : editingRole
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingRole
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
 
               </Button>

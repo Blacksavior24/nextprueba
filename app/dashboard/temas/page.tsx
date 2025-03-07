@@ -44,7 +44,7 @@ export default function Page() {
 
   const { data: temasResponse, isLoading, error } = useGetTemas()
 
-  const temas = temasResponse || [];  
+  const temas = temasResponse || [];
 
   const filteredTemas = temas.filter((tema) =>
     tema.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -57,23 +57,23 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createTemaMutation , AlertDialog: CreateAlertDialog} = useCreateTema()
-  const { mutation: updateTemaMutation , AlertDialog: UpdateAlertDialog} = useUpdateTema()
-  const { mutation: deleteTemaMutation , AlertDialog: DeleteAlertDialog} = useDeleteTema()
+  const { mutation: createTemaMutation, AlertDialog: CreateAlertDialog } = useCreateTema()
+  const { mutation: updateTemaMutation, AlertDialog: UpdateAlertDialog } = useUpdateTema()
+  const { mutation: deleteTemaMutation, AlertDialog: DeleteAlertDialog } = useDeleteTema()
 
 
   const handleCreateOrUpdateTema = async () => {
-   if (editingTema) {
-    updateTemaMutation.mutate(
-      { id: String(editingTema.id), Data: newTema},
-      {
-        onSuccess: () => {
-          setIsModalOpen(false);
-          setEditingTema(null);
+    if (editingTema) {
+      updateTemaMutation.mutate(
+        { id: String(editingTema.id), Data: newTema },
+        {
+          onSuccess: () => {
+            setIsModalOpen(false);
+            setEditingTema(null);
+          }
         }
-      }
-    )
-   } else {
+      )
+    } else {
       createTemaMutation.mutate(newTema, {
         onSuccess: () => {
           setIsModalOpen(false);
@@ -82,7 +82,7 @@ export default function Page() {
           })
         }
       })
-   }
+    }
   }
 
   const handleEditClick = (tema: Tema) => {
@@ -107,14 +107,14 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingTema(null); 
+            <Button onClick={() => {
+              setEditingTema(null);
               setNewTema({
                 nombre: ''
               })
-              setIsModalOpen(true); 
+              setIsModalOpen(true);
             }
-              }>
+            }>
               Agregar Tema
             </Button>
 
@@ -141,8 +141,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -166,7 +169,7 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(tema)}
-                          //disabled={isUpdating}
+                        //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -174,7 +177,7 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => handleDeleteTema(String(tema.id))}
-                          //disabled={isUpdating}
+                        //disabled={isUpdating}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -192,16 +195,16 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>{editingTema?'Editar Tema':'Nuevo Tema'}</DialogTitle>
+              <DialogTitle>{editingTema ? 'Editar Tema' : 'Nuevo Tema'}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
-            <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newTema.nombre}
-                    onChange={(e)=> setNewTema({...newTema, nombre: e.target.value})}
-                  />
+              <div className='grid gap-2'>
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newTema.nombre}
+                  onChange={(e) => setNewTema({ ...newTema, nombre: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -210,10 +213,10 @@ export default function Page() {
                 disabled={createTemaMutation.isPending || updateTemaMutation.isPending}
               >
                 {createTemaMutation.isPending || updateTemaMutation.isPending
-                ? "Guardando"
-                : editingTema
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingTema
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
 
               </Button>

@@ -59,15 +59,15 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createAreaMutation , AlertDialog: CreateAlertDialog} = useCreateArea()
-  const { mutation: updateAreaMutation , AlertDialog: UpdateAlertDialog} = useUpdateArea()
-  const { mutation: deleteAreaMutation , AlertDialog: DeleteAlertDialog} = useDeleteArea()
+  const { mutation: createAreaMutation, AlertDialog: CreateAlertDialog } = useCreateArea()
+  const { mutation: updateAreaMutation, AlertDialog: UpdateAlertDialog } = useUpdateArea()
+  const { mutation: deleteAreaMutation, AlertDialog: DeleteAlertDialog } = useDeleteArea()
 
 
   const handleCreateOrUpdateArea = async () => {
     if (editingArea) {
       updateAreaMutation.mutate(
-        { id: String(editingArea.id), Data: newArea},
+        { id: String(editingArea.id), Data: newArea },
         {
           onSuccess: () => {
             setIsModalOpen(false);
@@ -75,8 +75,8 @@ export default function Page() {
           }
         }
       )
-    }else{
-      createAreaMutation.mutate(newArea,{
+    } else {
+      createAreaMutation.mutate(newArea, {
         onSuccess: () => {
           setIsModalOpen(false);
           setNewArea({
@@ -111,13 +111,13 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingArea(null); 
+            <Button onClick={() => {
+              setEditingArea(null);
               setNewArea({
                 nombre: '',
                 procedencia: ''
               })
-              setIsModalOpen(true); 
+              setIsModalOpen(true);
             }}>
               Agregar Area
             </Button>
@@ -146,8 +146,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -172,7 +175,7 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(tema)}
-                          //disabled={isUpdating}
+                        //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -199,24 +202,24 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingArea?"Editar Area":"Nueva Area"}</DialogTitle>
+              <DialogTitle>{editingArea ? "Editar Area" : "Nueva Area"}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
               <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newArea.nombre}
-                    onChange={(e)=> setNewArea({...newArea, nombre: e.target.value})}
-                  />
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newArea.nombre}
+                  onChange={(e) => setNewArea({ ...newArea, nombre: e.target.value })}
+                />
               </div>
               <div className='grid gap-2'>
-                  <Label htmlFor='procedencia'>Procedencia</Label>
-                  <Input
-                    id='procedencia'
-                    value={newArea.procedencia}
-                    onChange={(e)=> setNewArea({...newArea, procedencia: e.target.value})}
-                  />
+                <Label htmlFor='procedencia'>Procedencia</Label>
+                <Input
+                  id='procedencia'
+                  value={newArea.procedencia}
+                  onChange={(e) => setNewArea({ ...newArea, procedencia: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -225,10 +228,10 @@ export default function Page() {
                 disabled={createAreaMutation.isPending || updateAreaMutation.isPending}
               >
                 {createAreaMutation.isPending || updateAreaMutation.isPending
-                ? "Guardando"
-                : editingArea
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingArea
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
               </Button>
             </DialogFooter>

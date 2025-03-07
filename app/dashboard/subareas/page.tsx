@@ -42,15 +42,15 @@ export default function Page() {
   const [newSubArea, setNewSubArea] = useState<CreateSubAreaDto>({
     nombre: '',
     procedencia: '',
-    areaResponsableId: '' ,
+    areaResponsableId: '',
     jefatura: ''
   })
-  
+
   const [editingSubArea, setEditingSubArea] = useState<SubArea | null>(null);
 
- 
-  const { data: subAreasResponse, isLoading, error} = useGetSubAreas()
-  const { data: areasResponse} = useGetAreas()
+
+  const { data: subAreasResponse, isLoading, error } = useGetSubAreas()
+  const { data: areasResponse } = useGetAreas()
 
 
   const subareas = subAreasResponse || [];
@@ -67,14 +67,14 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createSubAreaMutation , AlertDialog: CreateAlertDialog} = useCreateSubArea()
-  const { mutation: updateSubAreaMutation , AlertDialog: UpdateAlertDialog} = useUpdateSubArea()
-  const { mutation: deleteSubAreaMutation , AlertDialog: DeleteAlertDialog} = useDeleteSubArea()
+  const { mutation: createSubAreaMutation, AlertDialog: CreateAlertDialog } = useCreateSubArea()
+  const { mutation: updateSubAreaMutation, AlertDialog: UpdateAlertDialog } = useUpdateSubArea()
+  const { mutation: deleteSubAreaMutation, AlertDialog: DeleteAlertDialog } = useDeleteSubArea()
 
   const handleCreateOrUpdateSubArea = async () => {
     if (editingSubArea) {
       updateSubAreaMutation.mutate(
-        { id: String(editingSubArea.id), Data: newSubArea},
+        { id: String(editingSubArea.id), Data: newSubArea },
         {
           onSuccess: () => {
             setIsModalOpen(false);
@@ -83,7 +83,7 @@ export default function Page() {
         }
       )
     } else {
-      createSubAreaMutation.mutate(newSubArea,{
+      createSubAreaMutation.mutate(newSubArea, {
         onSuccess: () => {
           setIsModalOpen(false);
           setNewSubArea({
@@ -119,16 +119,16 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingSubArea(null); 
+            <Button onClick={() => {
+              setEditingSubArea(null);
               setNewSubArea({
                 nombre: '',
                 procedencia: '',
                 areaResponsableId: '',
                 jefatura: ''
               })
-              setIsModalOpen(true); 
-              }}>
+              setIsModalOpen(true);
+            }}>
               Agregar SubÁrea
             </Button>
 
@@ -158,8 +158,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -186,7 +189,7 @@ export default function Page() {
                         <DropdownMenuItem
                           className="text-blue-600"
                           onClick={() => handleEditClick(subArea)}
-                          //disabled={isUpdating}
+                        //disabled={isUpdating}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
@@ -210,24 +213,24 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>{editingSubArea?'Editar Sub Area':'Nuevo Sub Area'}</DialogTitle>
+              <DialogTitle>{editingSubArea ? 'Editar Sub Area' : 'Nuevo Sub Area'}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
               <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newSubArea.nombre}
-                    onChange={(e)=> setNewSubArea({...newSubArea, nombre: e.target.value})}
-                  />
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newSubArea.nombre}
+                  onChange={(e) => setNewSubArea({ ...newSubArea, nombre: e.target.value })}
+                />
               </div>
               <div className='grid gap-2'>
-                  <Label htmlFor='procedencia'>Procedencia</Label>
-                  <Input
-                    id='procedencia'
-                    value={newSubArea.procedencia}
-                    onChange={(e)=> setNewSubArea({...newSubArea, procedencia: e.target.value})}
-                  />
+                <Label htmlFor='procedencia'>Procedencia</Label>
+                <Input
+                  id='procedencia'
+                  value={newSubArea.procedencia}
+                  onChange={(e) => setNewSubArea({ ...newSubArea, procedencia: e.target.value })}
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="area">Area</Label>
@@ -248,23 +251,23 @@ export default function Page() {
                 </Select>
               </div>
               <div className='grid gap-2'>
-                  <Label htmlFor='jefatura'>Jefatura</Label>
-                  <Select
-                    value={newSubArea.jefatura}
-                    onValueChange={(value)=> setNewSubArea({ ...newSubArea, jefatura: value})}
-                  >
-                    <SelectTrigger id='jefatura'>
-                      <SelectValue placeholder="Jefatura?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem key="subarea-1" value='Si'>
-                          Si
-                      </SelectItem>
-                      <SelectItem key="subarea-0" value='No'>
-                          No
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                <Label htmlFor='jefatura'>Jefatura</Label>
+                <Select
+                  value={newSubArea.jefatura}
+                  onValueChange={(value) => setNewSubArea({ ...newSubArea, jefatura: value })}
+                >
+                  <SelectTrigger id='jefatura'>
+                    <SelectValue placeholder="Jefatura?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem key="subarea-1" value='Si'>
+                      Si
+                    </SelectItem>
+                    <SelectItem key="subarea-0" value='No'>
+                      No
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -273,10 +276,10 @@ export default function Page() {
                 disabled={createSubAreaMutation.isPending || updateSubAreaMutation.isPending}
               >
                 {createSubAreaMutation.isPending || updateSubAreaMutation.isPending
-                ? "Guardando"
-                : editingSubArea
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingSubArea
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
               </Button>
             </DialogFooter>

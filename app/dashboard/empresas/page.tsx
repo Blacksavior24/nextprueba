@@ -42,7 +42,7 @@ export default function Page() {
   })
   const [editingEmpresa, setEditingEmpresa] = useState<Empresa | null>(null);
 
-  const {data: empresasResponse, isLoading, error} = useGetEmpresas()
+  const { data: empresasResponse, isLoading, error } = useGetEmpresas()
 
   const empresas = empresasResponse || [];
   const filteredEmpresas = empresas.filter((empresa) =>
@@ -56,14 +56,14 @@ export default function Page() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const { mutation: createEmpresaMutation , AlertDialog: CreateAlertDialog} = useCreateEmpresa()
-  const { mutation: updateEmpresaMutation , AlertDialog: UpdateAlertDialog} = useUpdateEmpresa()
-  const { mutation: deleteEmpresaMutation , AlertDialog: DeleteAlertDialog} = useDeleteEmpresa()  
+  const { mutation: createEmpresaMutation, AlertDialog: CreateAlertDialog } = useCreateEmpresa()
+  const { mutation: updateEmpresaMutation, AlertDialog: UpdateAlertDialog } = useUpdateEmpresa()
+  const { mutation: deleteEmpresaMutation, AlertDialog: DeleteAlertDialog } = useDeleteEmpresa()
 
   const handleCreateOrUpdateEmpresa = async () => {
     if (editingEmpresa) {
       updateEmpresaMutation.mutate(
-        { id: String(editingEmpresa.id), Data: newEmpresa},
+        { id: String(editingEmpresa.id), Data: newEmpresa },
         {
           onSuccess: () => {
             setIsModalOpen(false);
@@ -71,8 +71,8 @@ export default function Page() {
           }
         }
       )
-    }else{
-      createEmpresaMutation.mutate(newEmpresa,{
+    } else {
+      createEmpresaMutation.mutate(newEmpresa, {
         onSuccess: () => {
           setIsModalOpen(false);
           setNewEmpresa({
@@ -106,12 +106,13 @@ export default function Page() {
           </h2>
           <div className="flex justify-between items-center mb-4">
             {/* Botón para abrir el modal */}
-            <Button onClick={() => { 
-              setEditingEmpresa(null); 
+            <Button onClick={() => {
+              setEditingEmpresa(null);
               setNewEmpresa({
                 nombre: ''
-              }); 
-              setIsModalOpen(true); }}>
+              });
+              setIsModalOpen(true);
+            }}>
               Agregar Empresa
             </Button>
 
@@ -138,8 +139,11 @@ export default function Page() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
-                  Cargando...
+                <TableCell colSpan={10} className="text-center py-8">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : error ? (
@@ -188,16 +192,16 @@ export default function Page() {
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>{editingEmpresa?'Editar Empresa':'Nueva Empresa'}</DialogTitle>
+              <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nueva Empresa'}</DialogTitle>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
-            <div className='grid gap-2'>
-                  <Label htmlFor='nombre'>Nombre</Label>
-                  <Input
-                    id='nombre'
-                    value={newEmpresa.nombre}
-                    onChange={(e)=> setNewEmpresa({...newEmpresa, nombre: e.target.value})}
-                  />
+              <div className='grid gap-2'>
+                <Label htmlFor='nombre'>Nombre</Label>
+                <Input
+                  id='nombre'
+                  value={newEmpresa.nombre}
+                  onChange={(e) => setNewEmpresa({ ...newEmpresa, nombre: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -206,10 +210,10 @@ export default function Page() {
                 disabled={createEmpresaMutation.isPending || updateEmpresaMutation.isPending}
               >
                 {createEmpresaMutation.isPending || updateEmpresaMutation.isPending
-                ? "Guardando"
-                : editingEmpresa
-                ? "Guardar Cambios"
-                : "Guardar"
+                  ? "Guardando"
+                  : editingEmpresa
+                    ? "Guardar Cambios"
+                    : "Guardar"
                 }
 
               </Button>

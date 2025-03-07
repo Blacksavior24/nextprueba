@@ -18,7 +18,7 @@ export default function Page() {
   const [select, setSelect] = useState('');
   const {data: cards, isLoading, refetch, error } = useGetCards()
 
-  const filteredCards = cards?.filter((card) =>
+  const filteredCards = cards?.data.filter((card) =>
     card.codigoRecibido.toLowerCase().includes(searchTerm.toLowerCase()) ||
     card.destinatario.toLowerCase().includes(searchTerm.toLowerCase()) ||
     card.asunto.toLowerCase().includes(searchTerm.toLowerCase())

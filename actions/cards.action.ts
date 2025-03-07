@@ -100,7 +100,7 @@ export const getCards = async (
 ):  Promise<CardsResponse> => {
     try {
 
-        console.log("que envio ptmre", searchBy)
+        console.log("que envio ptmre", searchBy, filters)
         
         const params = new URLSearchParams();
 
