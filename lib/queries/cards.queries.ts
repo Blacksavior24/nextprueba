@@ -1,4 +1,4 @@
-import { createReceivedCard, getCardById, getCards, getCardsEmitidos } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
+import { createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { Card, CardsResponse, CreateCardDto } from "@/interfaces/cartas.interfaces"
 import { useAlertDialog } from "@/components/AlertDialog"
@@ -21,6 +21,15 @@ export const useGetCardById = (id: string, open: boolean) => {
     return useQuery<{fechaIngreso: Date} & Omit<Card, 'fechaIngreso'>>({
         queryKey: ['card', id],
         queryFn: () => getCardById(id),
+        staleTime: 1000*10*10,
+        enabled: !!id && open
+    })
+}
+
+export const useGetCardByIdTraza = (id: string, open: boolean) => {
+    return useQuery<Card>({
+        queryKey: ['cardtraza', id],
+        queryFn: () => getCardByIdTraza(id),
         staleTime: 1000*10*10,
         enabled: !!id && open
     })

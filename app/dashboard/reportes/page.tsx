@@ -35,10 +35,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useGetCards } from "@/lib/queries/cards.queries"
-import { FileDown, FolderDown, MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react'
+import { FileDown, FolderDown, MoreHorizontal, Pencil, Trash2, Search, History } from 'lucide-react'
 import * as XLSX from "xlsx"
 import { AssignForm } from "@/components/Asignar-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import TraceabilityDialog from "@/components/trazability-dialog"
 
 const ITEMS_PER_PAGE = 8
 
@@ -58,6 +59,7 @@ export default function ReportTable() {
     estado: ""
   })
   const [openEdit, setOpenEdit] = useState(false)
+  const [openTraza, setOpenTraza] = useState(false)
   const [selectedCardId, setSelectedCardId] = useState("")
   const [isFiltering, setIsFiltering] = useState(false)
 
@@ -153,6 +155,11 @@ export default function ReportTable() {
       // After successful deletion
       refetch()
     }
+  }
+
+  const handleTraza = (id: string) => {
+    setSelectedCardId(id)
+    setOpenTraza(true)
   }
 
   return (
@@ -252,6 +259,7 @@ export default function ReportTable() {
                 <TableHead className="font-bold">Devuelto</TableHead>
                 <TableHead className="font-bold">Estado</TableHead>
                 <TableHead className="font-bold">Código Anterior</TableHead>
+                <TableHead className="font-bold">Trazabilidad</TableHead>
                 <TableHead className="text-right font-bold">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -310,6 +318,19 @@ export default function ReportTable() {
                       </Badge>
                     </TableCell>
                     <TableCell>{card.cartaAnterior?.codigoRecibido || "-"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center space-x-1">
+                      { card.cartaAnterior?.codigoRecibido  &&(<Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-primary"
+                          onClick={() => handleTraza(card.id)}
+                        >
+                          <History className="h-4 w-4" />
+                          <span className="text-xs">Observar</span>
+                        </Button>)}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -411,6 +432,12 @@ export default function ReportTable() {
         onOpenChange={setOpenEdit}
         id={selectedCardId}
       />
+      <TraceabilityDialog
+        isOpen={openTraza}
+        onOpenChange={setOpenTraza}
+        id={selectedCardId}
+      />
+
     </Card>
   )
 }

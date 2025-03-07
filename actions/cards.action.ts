@@ -147,12 +147,37 @@ export const getCardById = async (id:string) => {
 
       let link = pdfInfo ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${pdfInfo}` : ''
 
-
       let formatFechaIngreso = parseISO(fechaIngreso)
+
 
       const payload = {
         ...rest,
         fechaIngreso: formatFechaIngreso,
+        pdfInfo: link,
+        correosCopia
+        //correosCopia: correosCopia.join(',')
+      }
+
+      return payload
+  } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+          throw new Error(error.response.data.message)
+        } else {
+          throw new Error((error as Error).message)
+        } 
+  }
+}
+
+export const getCardByIdTraza = async (id:string) => {
+  try {
+      const response = await formsApi.get<Card>(`cards/report/${id}`)
+      const {pdfInfo, fechaIngreso, correosCopia , ...rest} = response.data
+
+      let link = pdfInfo ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${pdfInfo}` : ''
+
+      const payload = {
+        ...rest,
+        fechaIngreso,
         pdfInfo: link,
         correosCopia
         //correosCopia: correosCopia.join(',')
