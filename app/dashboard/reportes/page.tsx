@@ -139,6 +139,8 @@ export default function ReportTable() {
         return "bg-green-100 text-green-800 border-green-300"
       case "pendiente":
         return "bg-yellow-100 text-yellow-800 border-yellow-300"
+      case "pendientearea":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300"
       case "cerrado":
         return "bg-red-100 text-red-800 border-red-300"
       default:
@@ -324,7 +326,7 @@ export default function ReportTable() {
                     <TableCell>{card.cartaAnterior?.codigoRecibido || "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center space-x-1">
-                      { card.cartaAnterior?.codigoRecibido  &&(<Button
+                      <Button
                           variant="outline"
                           size="sm"
                           className="h-8 text-primary"
@@ -332,7 +334,7 @@ export default function ReportTable() {
                         >
                           <History className="h-4 w-4" />
                           <span className="text-xs">Observar</span>
-                        </Button>)}
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
