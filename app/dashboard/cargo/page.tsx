@@ -41,7 +41,7 @@ export default function Page() {
             Cargo
           </h2>
           <div className="flex justify-between items-center mb-4">
-              <Button onClick={() => {refetch(); console.log("actualiza modo sync");}}>
+              <Button onClick={() => {refetch();}}>
                 <RefreshCcw />
               </Button>
               <div className="flex items-center gap-2">

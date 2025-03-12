@@ -12,6 +12,7 @@ interface AuthState {
     id: number | null;
     nombre: string | null;
     email: string | null;
+    subAreaId: number;
     rol: RolAuth | null;
   } | null;
   error: string | null;

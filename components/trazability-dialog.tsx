@@ -9,6 +9,7 @@ import { FolderDown, History, ArrowLeft, ArrowRight } from "lucide-react"
 import type { Card as CardInterface } from "@/interfaces/cartas.interfaces"
 import { useGetCardByIdTraza } from "@/lib/queries/cards.queries"
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card"
+import { Label } from "./ui/label"
 
 // Function to get the status color
 const getStatusColor = (estado: string) => {
@@ -86,53 +87,50 @@ export default function TraceabilityDialog({
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Cargando información de trazabilidad...</p>
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-600">
-            <p>{error.message || "Error al cargar los datos"}</p>
+            <p>Error al cargar los datos</p>
           </div>
         ) : letter && letter.id ? (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl flex items-center">
-                <History className="mr-2 h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
                 Trazabilidad de Carta: {letter.codigoRecibido}
               </DialogTitle>
-              <DialogDescription>
-                <div className="mt-2 p-3 bg-muted/30 rounded-md">
-                  <div className="grid grid-cols-2 gap-4 mb-2">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Destinatario:</span>
-                      <p className="font-medium">{letter.destinatario}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Fecha:</span>
-                      <p className="font-medium">{letter.fechaIngreso.toString()}</p>
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <span className="text-xs text-muted-foreground">Asunto:</span>
-                    <p className="font-medium">{letter.asunto}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Badge className={`${getStatusColor(letter.estado)} px-2 py-1 rounded-full text-xs font-semibold`}>
-                      {letter.estado}
-                    </Badge>
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="outline"
-                      className="hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                    >
-                      <a href={letter.pdfInfo} target="_blank" rel="noopener noreferrer">
-                        <FolderDown className="mr-2 h-4 w-4" />
-                        Ver PDF
-                      </a>
-                    </Button>
-                  </div>
-                </div>
+              <DialogDescription className="pt-2">
+                Detalles de la carta
               </DialogDescription>
+              <Card className="mt-2">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Destinatario:</Label>
+                        <span className="font-medium block">{letter.destinatario}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Fecha:</Label>
+                        <span className="font-medium block">{letter.fechaIngreso.toString()}</span>
+                      </div>
+                    </div>
+                    <div className="mb-4 space-y-1">
+                      <Label className="text-xs text-muted-foreground">Asunto:</Label>
+                      <span className="font-medium block">{letter.asunto}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className={getStatusColor(letter.estado)}>
+                        {letter.estado}
+                      </Badge>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={letter.pdfInfo} target="_blank" rel="noopener noreferrer">
+                          <FolderDown className="mr-2 h-4 w-4" />
+                          Ver PDF
+                        </a>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
             </DialogHeader>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
@@ -164,7 +162,7 @@ export default function TraceabilityDialog({
                         <div className="absolute left-2 top-4 w-4 h-4 rounded-full bg-blue-500 border-2 border-white z-10"></div>
 
                         <div className="pl-10 pb-4">
-                        <Card>
+                          <Card>
                             <CardHeader className="pb-2">
                               <div className="flex justify-between items-start">
                                 <div>
@@ -182,11 +180,11 @@ export default function TraceabilityDialog({
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                 <div>
                                   <p className="text-xs text-muted-foreground">Destinatario</p>
-                                  <p className="font-medium">{prevCard.destinatario}</p>
+                                  <Label className="font-medium">{prevCard.destinatario}</Label>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Asunto</p>
-                                  <p className="font-medium">{prevCard.asunto}</p>
+                                  <Label className="font-medium">{prevCard.asunto}</Label>
                                 </div>
                               </div>
                             </CardContent>
@@ -230,12 +228,13 @@ export default function TraceabilityDialog({
                         <div className="absolute left-2 top-4 w-4 h-4 rounded-full bg-green-500 border-2 border-white z-10"></div>
 
                         <div className="pl-10 pb-4">
-                        <Card>
+                          
+                          <Card>
                             <CardHeader className="pb-2">
                               <div className="flex justify-between items-start">
                                 <div>
                                   <h4 className="font-semibold text-green-700">{response.codigoRecibido}</h4>
-                                  <p className="text-sm text-gray-500">{response.fechaIngreso}</p>
+                                  {/* <p className="text-sm text-gray-500">{response.fechaIngreso}</p> */}
                                 </div>
                                 <Badge
                                   className={`${getStatusColor(response.estado)} px-2 py-1 rounded-full text-xs font-semibold`}
@@ -248,18 +247,18 @@ export default function TraceabilityDialog({
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                 <div>
                                   <p className="text-xs text-muted-foreground">Destinatario</p>
-                                  <p className="font-medium">{response.destinatario}</p>
+                                  <Label className="font-medium">{response.destinatario}</Label>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Asunto</p>
-                                  <p className="font-medium">{response.asunto}</p>
+                                  <Label className="font-medium">{response.asunto}</Label>
                                 </div>
                               </div>
 
                               {response.resumenRecibido && (
                                 <div className="mb-3">
                                   <p className="text-xs text-muted-foreground">Resumen</p>
-                                  <p className="text-sm">{response.resumenRecibido}</p>
+                                  <Label className="text-sm">{response.resumenRecibido}</Label>
                                 </div>
                               )}
                             </CardContent>

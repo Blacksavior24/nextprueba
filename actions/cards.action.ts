@@ -23,7 +23,6 @@ const uploadFile = async (file: any) => {
 
 export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omit<ReceivedCardDto, 'pdfInfo'>) => {
     try {
-        console.log("que esta llegando tmre", receivedCardDto)
 
         const { pdfInfo,correosCopia,referencia, ...rest } = receivedCardDto
 
@@ -33,7 +32,6 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
             ...rest,
             pdfInfo: fileData.fileName,
         }
-        console.log('payload final', payload)
         const payloadFinal = {
           ...payload,
           correosCopia: [correosCopia],
@@ -65,9 +63,25 @@ export const assignCard = async (id: string, assignedCardDto: AssignedCardDto)=>
     }
 }
 
-export const markCardAsPending = async (id: string, pendingCardDto: PendingCardDto) => {
+export const answerCardPending = async (id: string, pendingCardDto: {cartaborrador?: File} & Omit<PendingCardDto, 'cartaborrador'>) => {
   try {
-    const response = await formsApi.patch(`cards/pending/${id}`, pendingCardDto)
+    const {cartaborrador, ...rest} = pendingCardDto
+
+    let fileData;
+    let payload: PendingCardDto;
+
+    if (cartaborrador) {
+      fileData = await uploadFile(cartaborrador);
+      payload = {
+        ...rest,
+        cartaborrador: fileData.fileName
+      }
+    } else {
+      payload = {
+        ...rest
+      }
+    }
+    const response = await formsApi.patch(`cards/pending/${id}`, payload)
     return response.data
   } catch (error) {
     if (error instanceof AxiosError && error.response) {
@@ -77,6 +91,24 @@ export const markCardAsPending = async (id: string, pendingCardDto: PendingCardD
     } 
   }
 }
+
+export const closeCardPending = async (id: string) => {
+  try {
+    
+    const payload = {
+      estado: "Cerrado"
+    }
+    const response = await formsApi.patch(`cards/${id}`, payload)
+    return response.data
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error((error as Error).message)
+    } 
+  }
+}
+
 
 export const changeCardAssignment = async (id: string, assignmentCardDto: AssignmentCardDto) => {
     try {
@@ -100,7 +132,6 @@ export const getCards = async (
 ):  Promise<CardsResponse> => {
     try {
 
-        console.log("que envio ptmre", searchBy, filters)
         
         const params = new URLSearchParams();
 
@@ -118,7 +149,6 @@ export const getCards = async (
         params.append('page', page.toString())
         params.append('limit', limit.toString())
 
-        console.log('parametro final', params.getAll)
 
         const response = await formsApi.get<CardsResponse>('cards', {params})
 
@@ -126,6 +156,8 @@ export const getCards = async (
           ...card,
           pdfInfo: `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${card.pdfInfo}`
         }))
+
+        console.log("data que llega", modifiedData)
 
         return {
           ...response.data,
@@ -143,9 +175,10 @@ export const getCards = async (
 export const getCardById = async (id:string) => {
   try {
       const response = await formsApi.get<Card>(`cards/${id}`)
-      const {pdfInfo, fechaIngreso, correosCopia , ...rest} = response.data
+      const {pdfInfo, fechaIngreso, correosCopia, cartaborrador , ...rest} = response.data
 
       let link = pdfInfo ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${pdfInfo}` : ''
+      let link2 = cartaborrador ? `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${cartaborrador}`: ''
 
       let formatFechaIngreso = parseISO(fechaIngreso)
 
@@ -154,7 +187,8 @@ export const getCardById = async (id:string) => {
         ...rest,
         fechaIngreso: formatFechaIngreso,
         pdfInfo: link,
-        correosCopia
+        correosCopia,
+        cartaborrador: link2
         //correosCopia: correosCopia.join(',')
       }
 
@@ -208,4 +242,54 @@ export const getCardsEmitidos = async () => {
       throw new Error((error as Error).message)
     } 
   }
+}
+
+export const getCardsPending = async (
+  subAreaId: number,
+  page: number = 1, 
+  limit: number = 10, 
+  filters?: Record<string, string>, 
+  search?: string, 
+  searchBy?: string[] 
+):  Promise<CardsResponse> => {
+    try {
+
+        
+        const params = new URLSearchParams();
+
+        if (filters) {
+          params.append('filters', JSON.stringify(filters))
+        }
+
+        if (search) {
+          params.append('search', search)
+        }
+        if (searchBy) {
+          searchBy.forEach(field=> params.append('searchBy', field))
+        }
+
+        params.append('page', page.toString())
+        params.append('limit', limit.toString())
+
+
+        const response = await formsApi.get<CardsResponse>(`cards/pending/${subAreaId}`, {params})
+
+        const modifiedData = response.data.data.map(card=>({
+          ...card,
+          pdfInfo: `${process.env.NEXT_PUBLIC_API_URL}fileupload/files/${card.pdfInfo}`
+        }))
+
+        console.log("data que llega", modifiedData)
+
+        return {
+          ...response.data,
+          data: modifiedData
+        }
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error((error as Error).message)
+      } 
+    }
 }

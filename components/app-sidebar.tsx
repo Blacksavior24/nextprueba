@@ -43,7 +43,7 @@ const data = {
       name: "Cartas",
       url: "/dashboard/cartas",
       icon: FolderTree,
-      roles: ["admin", "editor"],
+      roles: ["admin"],
     },
     {
       name: "Pendientes",
@@ -57,7 +57,7 @@ const data = {
       name: "Reporte",
       url: "/dashboard/reportes",
       icon: NotepadText,
-      roles: ["admin"],
+      roles: ["admin", "user"],
     }
   ],
   projects: [
@@ -71,19 +71,19 @@ const data = {
       name: "Áreas",
       url: "/dashboard/areas",
       icon: Group,
-      roles: ["admin", "editor"],
+      roles: ["admin"],
     },
     {
       name: "Sub Áreas",
       url: "/dashboard/subareas",
       icon: Ungroup,
-      roles: ["admin", "editor"],
+      roles: ["admin"],
     },
     {
       name: "Temas",
       url: "/dashboard/temas",
       icon: StickyNote,
-      roles: ["admin", "editor", "user"],
+      roles: ["admin"],
     },
     {
       name: "Roles",
@@ -95,13 +95,13 @@ const data = {
       name: "Empresas",
       url: "/dashboard/empresas",
       icon: Factory,
-      roles: ["admin", "editor"],
+      roles: ["admin"],
     },
     {
       name: "Destinatarios",
       url: "/dashboard/destinatarios",
       icon: CheckCheck,
-      roles: ["admin", "editor"],
+      roles: ["admin"],
     }
   ],
 }

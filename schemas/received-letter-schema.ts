@@ -1,6 +1,7 @@
 import * as z from "zod"
 
 export const receivedLetterSchema = z.object({
+  emision: z.boolean().default(false),
   codigoRecibido: z.string().min(1, "El código es requerido"),
   fechaIngreso: z.date({
     required_error: "La fecha de ingreso es requerida",

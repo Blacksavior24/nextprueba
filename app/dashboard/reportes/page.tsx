@@ -40,6 +40,7 @@ import * as XLSX from "xlsx"
 import { AssignForm } from "@/components/Asignar-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import TraceabilityDialog from "@/components/trazability-dialog"
+import { useAuthStore } from "@/store/auth.store"
 
 const ITEMS_PER_PAGE = 8
 
@@ -63,6 +64,9 @@ export default function ReportTable() {
   const [selectedCardId, setSelectedCardId] = useState("")
   const [isFiltering, setIsFiltering] = useState(false)
 
+  const {user} = useAuthStore()
+
+  console.log(user)
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -293,7 +297,7 @@ export default function ReportTable() {
                     <TableCell className="max-w-[200px] truncate" title={card.asunto}>
                       {card.asunto}
                     </TableCell>
-                    <TableCell>{new Date(card.fechaIngreso).toLocaleDateString()}</TableCell>
+                    <TableCell>{card.fechaIngreso}</TableCell>
                     <TableCell>
                       <Button
                         asChild
@@ -333,7 +337,9 @@ export default function ReportTable() {
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild
+                          disabled={!user?.rol?.nombre.includes("admin")}
+                        >
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <span className="sr-only">Abrir menú</span>
                             <MoreHorizontal className="h-4 w-4" />

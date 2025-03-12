@@ -68,7 +68,6 @@ export const createUser = async (userData : CreateUsuarioDto) => {
 
 export const updateUser = async (id: string, userData : Partial<CreateUsuarioDto> ) => {
     try {
-        console.log("que wtf llega", userData);
         
         const updatedUser = await formsApi.patch<Usuario>(`users/${id}`, userData);
         return updatedUser.data;

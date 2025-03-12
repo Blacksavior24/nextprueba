@@ -1,6 +1,6 @@
-import { createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { Card, CardsResponse, CreateCardDto } from "@/interfaces/cartas.interfaces"
+import { answerCardPending, closeCardPending, createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos, getCardsPending } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Card, CardsResponse, CreateCardDto, PendingCardDto } from "@/interfaces/cartas.interfaces"
 import { useAlertDialog } from "@/components/AlertDialog"
 
 export const useGetCards = (
@@ -14,6 +14,22 @@ export const useGetCards = (
         queryKey: ["cards", page, limit, filters, search, searchBy],
         queryFn: ()=>getCards(page, limit, filters, search,searchBy),
         staleTime: 1000*10*10,
+    })
+}
+
+export const useGetCardsPending = (
+    subAreaId: number,
+    page: number = 1,
+    limit: number = 10,
+    filters?: Record<string, string>,
+    search?: string,
+    searchBy?: string[]
+) => {
+    return useQuery<CardsResponse>({
+        queryKey: ["cardspending", page, limit, filters, search, searchBy],
+        queryFn: () => getCardsPending(subAreaId, page, limit, filters, search, searchBy),
+        staleTime: 1000*10*10,
+        enabled: !!subAreaId
     })
 }
 
@@ -49,13 +65,14 @@ export const useCreateReceivedCardMutation = (
   onOpenChange: (open: boolean) => void
 ) => {
   const { fire, AlertDialog } = useAlertDialog();
-
+  const queryClient = useQueryClient();
   return {
       AlertDialog, // Exportar el componente para renderizarlo en tu aplicación
       mutation: useMutation({
           mutationFn: (data: { pdfInfo: File } & Omit<CreateCardDto, "pdfInfo">) =>
               createReceivedCard(data),
           onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["cards"] });
               fire({
                   title: "¡Éxito!",
                   text: "Carta recibida creada exitosamente",
@@ -78,3 +95,72 @@ export const useCreateReceivedCardMutation = (
       }),
   };
 };
+
+export const useAnswerPendingCardMutation = (
+    id: string,
+    resetForm: () => void,
+    onOpenChange: (open: boolean) => void
+)=> {
+    const { fire, AlertDialog } = useAlertDialog()
+    const queryClient = useQueryClient();
+    return {
+        AlertDialog,
+        mutation: useMutation({
+            mutationFn: (data: {cartaborrador?: File} & Omit<PendingCardDto, "cartaborrador">) =>
+                answerCardPending(id, data),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["cardspending"] });
+                fire({
+                    title: "¡Éxito!",
+                    text: "Actualización de carta exitosamente",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    onConfirm: () => {
+                        resetForm();
+                        onOpenChange(false);
+                    },
+                });
+            },
+            onError: (error: string) => {
+                fire({
+                    title: "Error",
+                    text: `Ocurrió un error al actualizar la carta: ${error}`,
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                });
+            },
+        })
+    }
+}
+
+
+export const useClosePendingCardMutation = ()=> {
+    const { fire, AlertDialog } = useAlertDialog()
+    const queryClient = useQueryClient();
+    return {
+        AlertDialog,
+        mutation: useMutation({
+            mutationFn: ( id: string,) =>
+                closeCardPending(id),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["cardspending"] });
+                fire({
+                    title: "¡Éxito!",
+                    text: "Carta Cerrada exitosamente",
+                    icon: "success",
+                    confirmButtonText: "Aceptar",
+                    onConfirm: () => {
+                    },
+                });
+            },
+            onError: (error: string) => {
+                fire({
+                    title: "Error",
+                    text: `Ocurrió un error al actualizar la carta: ${error}`,
+                    icon: "error",
+                    confirmButtonText: "Aceptar",
+                });
+            },
+        })
+    }
+}

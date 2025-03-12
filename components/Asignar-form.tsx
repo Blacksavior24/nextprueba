@@ -48,6 +48,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     const form = useForm<ReceivedLetterForm>({
         resolver: zodResolver(receivedLetterSchema),
         defaultValues: {
+            emision: false,
             codigoRecibido: "",
             fechaIngreso: new Date(),
             destinatario: "",
@@ -78,7 +79,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     useEffect(() => {
         
         if (open && data) {
-            
+            form.setValue("emision", data.emision || false)
             form.setValue("codigoRecibido", data.codigoRecibido || "");
             form.setValue("destinatario", data.destinatario || "");
             form.setValue("asunto", data.asunto || "");
@@ -100,6 +101,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
         }
         if (!open) {
             form.reset({
+                emision: false,
                 codigoRecibido: "",
                 fechaIngreso: new Date(),
                 destinatario: "",
@@ -168,13 +170,27 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
+                        <FormField
+                                control={form.control}
+                                name="emision"
+                                render={({field}) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>{field.value? 'Emitiendo':'Recibido'}</FormLabel>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
                             <div className="flex gap-2">
                                 <FormField
                                     control={form.control}
                                     name="codigoRecibido"
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
-                                            <FormLabel>Código Recibido:</FormLabel>
+                                            <FormLabel>Código de Carta:</FormLabel>
                                             <FormControl>
                                                 <Input {...field} className="w-full" />
                                             </FormControl>
@@ -219,13 +235,35 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     )}
                                 />
                             </div>
+                            <FormField
+                                    control={form.control}
+                                    name="empresaId"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>De / Empresa:</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Seleccionar Empresa" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {empresas && empresas.map(empresa => (
+                                                        <SelectItem value={String(empresa.id)} key={empresa.id}>{empresa.nombre}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage className="text-red-500 text-sm" />
+                                        </FormItem>
+                                    )}
+                                />
                             <div className="flex gap-2">
                                 <FormField
                                     control={form.control}
                                     name="destinatario"
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
-                                            <FormLabel>Destinatario:</FormLabel>
+                                            <FormLabel>Para / Destinatario:</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger className="w-full">
@@ -296,7 +334,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="esConfidencial"
                                 render={({ field }) => (
@@ -309,7 +347,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                         </div>
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
                             <FormField
                                 control={form.control}
                                 name="tipo"
@@ -352,28 +390,6 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                         <FormControl>
                                             <Textarea {...field} className="w-full" />
                                         </FormControl>
-                                        <FormMessage className="text-red-500 text-sm" />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="temaId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tema:</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Seleccionar Tema" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {temas && temas.map(tema => (
-                                                    <SelectItem value={String(tema.id)} key={tema.id}>{tema.nombre}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
                                 )}
@@ -422,28 +438,28 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                 />
                             </div>
                             <div className="flex gap-2">
-                                <FormField
-                                    control={form.control}
-                                    name="empresaId"
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <FormLabel>Empresa:</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Seleccionar Empresa" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {empresas && empresas.map(empresa => (
-                                                        <SelectItem value={String(empresa.id)} key={empresa.id}>{empresa.nombre}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage className="text-red-500 text-sm" />
-                                        </FormItem>
-                                    )}
-                                />
+                            <FormField
+                                control={form.control}
+                                name="temaId"
+                                render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                        <FormLabel>Tema:</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Seleccionar Tema" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {temas && temas.map(tema => (
+                                                    <SelectItem value={String(tema.id)} key={tema.id}>{tema.nombre}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-red-500 text-sm" />
+                                    </FormItem>
+                                )}
+                            />
                                 <FormField
                                     control={form.control}
                                     name="nivelImpacto"
