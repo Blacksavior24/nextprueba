@@ -14,13 +14,7 @@ export const receivedLetterSchema = z.object({
   informativo: z.boolean().default(false),
   urgente: z.boolean().default(false),
   tipo: z.boolean().default(false),
-  correosCopia: z
-    .string()
-    .regex(
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "El formato de correo electrónico es inválido"
-    )
-    .optional(),
+  correosCopia: z.array(z.string().email("Correo electrónico inválido")).default([]),
   temaId: z.string().min(1, "El tema es requerido"),
   areaResponsableId: z.string().min(1, "El área responsable es requerida"),
   subAreaId: z.string().min(1, "La subárea es requerida"),

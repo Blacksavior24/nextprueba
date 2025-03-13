@@ -230,6 +230,7 @@ export default function ReportTable() {
               <SelectContent>
                 <SelectItem value="Ingresado">Ingresado</SelectItem>
                 <SelectItem value="Pendiente">Pendiente</SelectItem>
+                <SelectItem value="PendienteArea">Pendiente de Area</SelectItem>
                 <SelectItem value="Cerrado">Cerrado</SelectItem>
               </SelectContent>
             </Select>

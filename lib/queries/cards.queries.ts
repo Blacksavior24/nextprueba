@@ -1,4 +1,4 @@
-import { answerCardPending, closeCardPending, createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos, getCardsPending } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
+import { answerCardPending, closeCardPending, createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos, getCardsPending, updateReceivedCard } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardsResponse, CreateCardDto, PendingCardDto } from "@/interfaces/cartas.interfaces"
 import { useAlertDialog } from "@/components/AlertDialog"
@@ -85,6 +85,7 @@ export const useCreateReceivedCardMutation = (
               });
           },
           onError: (error: string) => {
+            console.log('se crea')
               fire({
                   title: "Error",
                   text: `Ocurrió un error al crear la carta: ${error}`,
@@ -95,6 +96,43 @@ export const useCreateReceivedCardMutation = (
       }),
   };
 };
+
+export const useUpdateReceivedCardMutation = (
+    resetForm: () => void,
+  onOpenChange: (open: boolean) => void
+) => {
+    const { fire, AlertDialog } = useAlertDialog();
+  const queryClient = useQueryClient();
+  return {
+      AlertDialog, // Exportar el componente para renderizarlo en tu aplicación
+      mutation: useMutation({
+          mutationFn: (data: { pdfInfo: File } & {id : string} & Omit<CreateCardDto, "pdfInfo">) =>
+              updateReceivedCard(data),
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["cards"] });
+              fire({
+                  title: "¡Éxito!",
+                  text: "Carta recibida actualizada exitosamente",
+                  icon: "success",
+                  confirmButtonText: "Aceptar",
+                  onConfirm: () => {
+                      resetForm();
+                      onOpenChange(false);
+                  },
+              });
+          },
+          onError: (error: string) => {
+            console.log('se crea')
+              fire({
+                  title: "Error",
+                  text: `Ocurrió un error al crear la carta: ${error}`,
+                  icon: "error",
+                  confirmButtonText: "Aceptar",
+              });
+          },
+      }),
+  };
+}
 
 export const useAnswerPendingCardMutation = (
     id: string,

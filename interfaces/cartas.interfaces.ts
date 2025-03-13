@@ -13,7 +13,7 @@ export interface CreateCardDto {
   vencimiento: boolean; // boolean, valor por defecto false
   informativo: boolean; // boolean, valor por defecto false
   urgente: boolean; // boolean, valor por defecto false
-  correosCopia?: string; // string (correo electrónico), opcional
+  correosCopia?: string[]; // string (correo electrónico), opcional
   temaId: string; // string
   areaResponsableId: string; // string
   subAreaId: string; // string
@@ -33,7 +33,7 @@ export interface ReceivedCardDto {
   referencia?: string;
   esConfidencial: boolean;
   fechaIngreso: Date;
-  correosCopia?: string,
+  correosCopia?: string[],
   areaResponsableId: string;
   subAreaId: string;
   empresaId: string;
@@ -98,7 +98,7 @@ export interface Card {
   resumenRecibido: string;
   tema: string;
   nivelImpacto: string;
-  correosCopia: string;
+  correosCopia: string[];
   areaResponsableId: number;
   subAreaId: number;
   empresaId: number;

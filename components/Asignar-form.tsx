@@ -1,6 +1,6 @@
 'use client'
 
-import { useCreateReceivedCardMutation, useGetCardById, useGetCards } from "@/lib/queries/cards.queries"
+import { useCreateReceivedCardMutation, useGetCardById, useGetCards, useUpdateReceivedCardMutation } from "@/lib/queries/cards.queries"
 import { ReceivedLetterForm, receivedLetterSchema } from "@/schemas/received-letter-schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useState } from "react"
@@ -27,6 +27,8 @@ import { useGetEmpresas } from "@/lib/queries/companies.queries"
 import { useGetAreas } from "@/lib/queries/areas.queries"
 import { useGetSubAreas } from "@/lib/queries/subareas.queries"
 import { DragAndDropInput } from "./drag-and-drop-input"
+import { MultiEmailInput } from "./multi-email-input"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface DialogProps {
     open: boolean
@@ -63,7 +65,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
             subAreaId: "",
             empresaId: "",
             nivelImpacto: "",
-            correosCopia: "",
+            correosCopia: [],
             vencimiento: false,
             fechadevencimiento: undefined,
             informativo: false,
@@ -74,7 +76,10 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
 
     const { data: cards, isLoading: isLoadingCards } = useGetCards()
     const { data, error, isLoading } = useGetCardById(id, open)
-    const { AlertDialog, mutation } = useCreateReceivedCardMutation(form.reset, onOpenChange)
+    const { AlertDialog: CreateAlertDialog, mutation: CreateReceivedMutation } = useCreateReceivedCardMutation(form.reset, onOpenChange)
+    const { AlertDialog: UpdateAlertDialog, mutation: UpdateReceiveMutation} = useUpdateReceivedCardMutation(form.reset, onOpenChange )
+
+    const queryClient = useQueryClient()
 
     useEffect(() => {
         
@@ -93,7 +98,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
             form.setValue("subAreaId", String(data.subAreaId) );
             form.setValue("empresaId", String(data.empresaId) );
             form.setValue("nivelImpacto", data.nivelImpacto || "");
-            form.setValue("correosCopia", data.correosCopia);
+            form.setValue("correosCopia", data.correosCopia || []);
             form.setValue("vencimiento", data.vencimiento || false);
             //form.setValue("fechadevencimiento", data.fechadevencimiento || new Date());
             form.setValue("informativo", data.informativo || false);
@@ -116,7 +121,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                 subAreaId: "",
                 empresaId: "",
                 nivelImpacto: "",
-                correosCopia: "",
+                correosCopia: [],
                 vencimiento: false,
                 fechadevencimiento: new Date(),
                 informativo: false,
@@ -126,7 +131,24 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     }, [data, form, open, id]) // Este effect depende de los datos de la carta y los destinatarios
 
     function onSubmit(data: ReceivedLetterForm) {
-        mutation.mutate(data)
+        if (id) {
+            UpdateReceiveMutation.mutate(
+                {id: String(id), ...data},
+                {
+                    onSuccess: () => {
+                        queryClient.invalidateQueries({ queryKey: ['card', id] });
+                    }
+                }
+            )
+        } else {
+            CreateReceivedMutation.mutate(data,
+            //     {
+            //     onSuccess: () => {
+            //         onOpenChange(false)
+            //     }
+            // }
+        )
+        }
     }
 
     if (!open) return null; // No renderizar si el modal no está abierto
@@ -468,7 +490,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     )}
                                 />
                             </div>
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="correosCopia"
                                 render={({ field }) => (
@@ -484,6 +506,12 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                         <FormMessage className="text-red-500 text-sm" />
                                     </FormItem>
                                 )}
+                            /> */}
+                            <MultiEmailInput
+                                form={form}
+                                name="correosCopia"
+                                label="Correos de copia:"
+                                externalEmails={data?.correosCopia}
                             />
                             <div className="flex gap-6">
                                 <FormField
@@ -576,7 +604,8 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                     </Form>
 
                 </ScrollArea>
-             <AlertDialog />
+             <CreateAlertDialog />
+             <UpdateAlertDialog />
             </DialogContent>
         </Dialog>
     )

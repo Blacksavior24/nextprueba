@@ -25,7 +25,7 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
     try {
 
         const { pdfInfo,correosCopia,referencia, ...rest } = receivedCardDto
-
+        console.log('copa', correosCopia, rest)
         const fileData = await uploadFile(pdfInfo)
 
         const payload: ReceivedCardDto = {
@@ -34,7 +34,7 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
         }
         const payloadFinal = {
           ...payload,
-          correosCopia: [correosCopia],
+          correosCopia,
           referencia: Number(referencia),
           tipo: payload.tipo?'Respondido':'Recibido'
         }
@@ -48,6 +48,46 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
         throw new Error((error as Error).message)
       } 
     }
+}
+
+export const updateReceivedCard = async(receivedCardDto: { pdfInfo: File } & {id: string} & Omit<Partial<ReceivedCardDto>, 'pdfInfo'>) => {
+  try {
+
+      const { pdfInfo,correosCopia,referencia, id,...rest } = receivedCardDto
+      console.log('copa', correosCopia, rest)
+      const fileData = await uploadFile(pdfInfo)
+
+      const payload: Partial<ReceivedCardDto> = {
+          ...rest,
+          pdfInfo: fileData.fileName,
+      }
+
+      let payloadFinal = {}
+      if (!(Number(referencia) === 0)) {
+        payloadFinal = {
+        ...payload,
+        correosCopia,
+        referencia: Number(referencia),
+        tipo: payload.tipo?'Respondido':'Recibido'
+        }
+      }else{
+        payloadFinal = {
+          ...payload,
+          correosCopia,
+          tipo: payload.tipo?'Respondido':'Recibido'
+        }
+      }
+
+
+      const response = await formsApi.patch(`cards/${id}`, payloadFinal)
+      return response.data
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error((error as Error).message)
+    } 
+  }
 }
 
 export const assignCard = async (id: string, assignedCardDto: AssignedCardDto)=>{
