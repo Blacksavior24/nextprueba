@@ -2,18 +2,20 @@ import * as z from "zod"
 
 export const receivedLetterSchema = z.object({
   emision: z.boolean().default(false),
+  partida: z.boolean().default(false),
   codigoRecibido: z.string().min(1, "El código es requerido"),
   fechaIngreso: z.date({
     required_error: "La fecha de ingreso es requerida",
   }),
   destinatario: z.string().min(1, "El destinatario es requerido"),
   asunto: z.string().min(1, "El asunto es requerido"),
-  pdfInfo: z.instanceof(File, { message: "El archivo es requerido" }),
+  pdfInfo: z.instanceof(File, { message: "El archivo es requerido" }).optional(),
   esConfidencial: z.boolean().default(false),
   vencimiento: z.boolean().default(false),
   informativo: z.boolean().default(false),
   urgente: z.boolean().default(false),
   tipo: z.boolean().default(false),
+  estado: z.string().optional(),
   correosCopia: z.array(z.string().email("Correo electrónico inválido")).default([]),
   temaId: z.string().min(1, "El tema es requerido"),
   areaResponsableId: z.string().min(1, "El área responsable es requerida"),
@@ -24,7 +26,8 @@ export const receivedLetterSchema = z.object({
   nivelImpacto: z.string().optional(),
   fechadevencimiento: z.date({
     required_error: "La fecha de vencimiento es requerida",
-  })
+  }),
+  
 })
 
 export type ReceivedLetterForm = z.infer<typeof receivedLetterSchema>

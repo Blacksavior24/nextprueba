@@ -21,12 +21,17 @@ const uploadFile = async (file: any) => {
     }
   }
 
-export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omit<ReceivedCardDto, 'pdfInfo'>) => {
+export const createReceivedCard = async(receivedCardDto: { pdfInfo?: File } & Omit<ReceivedCardDto, 'pdfInfo'>) => {
     try {
 
         const { pdfInfo,correosCopia,referencia, ...rest } = receivedCardDto
         console.log('copa', correosCopia, rest)
-        const fileData = await uploadFile(pdfInfo)
+        let fileData;
+        
+        if (pdfInfo) {
+          fileData = await uploadFile(pdfInfo)  
+        }
+        
 
         const payload: ReceivedCardDto = {
             ...rest,
@@ -50,16 +55,22 @@ export const createReceivedCard = async(receivedCardDto: { pdfInfo: File } & Omi
     }
 }
 
-export const updateReceivedCard = async(receivedCardDto: { pdfInfo: File } & {id: string} & Omit<Partial<ReceivedCardDto>, 'pdfInfo'>) => {
+export const updateReceivedCard = async(receivedCardDto: { pdfInfo?: File } & {id: string} & Omit<Partial<ReceivedCardDto>, 'pdfInfo'>) => {
   try {
 
       const { pdfInfo,correosCopia,referencia, id,...rest } = receivedCardDto
       console.log('copa', correosCopia, rest)
-      const fileData = await uploadFile(pdfInfo)
+      
+      let fileData;
+        
+        if (pdfInfo) {
+          fileData = await uploadFile(pdfInfo)  
+        }
+        
 
       const payload: Partial<ReceivedCardDto> = {
           ...rest,
-          pdfInfo: fileData.fileName,
+          pdfInfo: fileData?.fileName,
       }
 
       let payloadFinal = {}

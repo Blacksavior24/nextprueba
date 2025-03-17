@@ -117,6 +117,7 @@ export interface Card {
   cartaEnviada: string;
   comentarioCargo: string;
   emision: boolean;
+  partida: boolean;
   areaResponsable: Area;
   subArea: SubArea;
   empresa: Empresa;

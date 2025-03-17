@@ -33,6 +33,7 @@ import { useCreateUser, useDeleteUser, useGetUsers, useUpdateUser } from '@/lib/
 import { useGetAreas } from '@/lib/queries/areas.queries';
 import { useGetSubAreas } from '@/lib/queries/subareas.queries';
 import { useGetRoles } from '@/lib/queries/roles.queries';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -286,6 +287,7 @@ export default function Page() {
             <DialogHeader>
               <DialogTitle>{editingUsuario ? "Editar Usuario" : "Agregar Nuevo Usuario"}</DialogTitle>
             </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="nombre">Nombre</Label>
@@ -408,6 +410,7 @@ export default function Page() {
                 </Select>
               </div>
             </div>
+            </ScrollArea>
             <DialogFooter>
               <Button
                 onClick={handleCreateOrUpdateUsuario}

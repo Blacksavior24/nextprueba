@@ -79,7 +79,7 @@ export function PendingForm({ open, onOpenChange, id }: DialogProps) {
       });
   }
   }, [open, data, form, id])
-  
+
   if (!open) return null; // No renderizar si el modal no está abierto
 
 
@@ -159,18 +159,18 @@ export function PendingForm({ open, onOpenChange, id }: DialogProps) {
               )}
 
               <div className="flex flex-wrap gap-1.5">
-                {data?.esConfidencial && (
+                {/* {data?.esConfidencial && (
                   <Badge variant="destructive" className="text-xs">
                     Confidencial
                   </Badge>
-                )}
+                )} */}
                 {data?.urgente && (
                   <Badge variant="destructive" className="text-xs">
                     Urgente
                   </Badge>
                 )}
                 {data?.informativo && <Badge className="text-xs">Informativo</Badge>}
-                {data?.tipo && <Badge className="text-xs">Respondido</Badge>}
+                {/* {data?.tipo && <Badge className="text-xs">Respondido</Badge>} */}
               </div>
 
               {data?.tipo && data?.referencia && (

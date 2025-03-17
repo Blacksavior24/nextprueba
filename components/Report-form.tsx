@@ -29,7 +29,6 @@ import { useGetSubAreas } from "@/lib/queries/subareas.queries"
 import { DragAndDropInput } from "./drag-and-drop-input"
 import { MultiEmailInput } from "./multi-email-input"
 import { useQueryClient } from "@tanstack/react-query"
-import { Label } from "./ui/label"
 
 interface DialogProps {
     open: boolean
@@ -37,7 +36,7 @@ interface DialogProps {
     id: string
 }
 
-export function AssignForm({ open, onOpenChange, id }: DialogProps) {
+export function ReportForm({ open, onOpenChange, id }: DialogProps) {
 
     const [openPopover, setOpenPopover] = useState(false);
     const [openPopoverOne, setOpenPopoverOne] = useState(false);
@@ -54,6 +53,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
             emision: false,
             partida: false,
             codigoRecibido: "",
+            estado: "",
             fechaIngreso: new Date(),
             destinatario: "",
             asunto: "",
@@ -90,6 +90,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
             form.setValue("partida", data.partida || false)
             form.setValue("codigoRecibido", data.codigoRecibido || "");
             form.setValue("destinatario", data.destinatario || "");
+            form.setValue("estado", data.estado)
             form.setValue("asunto", data.asunto || "");
             form.setValue("fechaIngreso", data.fechaIngreso || new Date());
             form.setValue("esConfidencial", data.esConfidencial || false);
@@ -112,6 +113,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                 emision: false,
                 partida: false,
                 codigoRecibido: "",
+                estado: "",
                 fechaIngreso: new Date(),
                 destinatario: "",
                 asunto: "",
@@ -154,9 +156,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
         )
         }
     }
-
     if (!open) return null; // No renderizar si el modal no está abierto
-
     // Si se está cargando alguna de las entidades, mostrar el loading
     if (isLoading || isLoadingCards || isLoadingSub || isLoadingTemas ||isLoadingAreas || isLoadingDestinatario || isLoadingEmpresa) {
       return (
@@ -167,8 +167,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
         <p className="mt-4 text-lg text-gray-700">Cargando...</p>
       </div>
       );
-    }
-
+    }   
 
     return (
         <Dialog
@@ -185,7 +184,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
             >
                 <DialogHeader>
                     <DialogTitle>
-                        { id? "Editar Carta":"Generar Carta"}
+                        Editar Carta
                     </DialogTitle>
                 </DialogHeader>
                 <DialogDescription>
@@ -195,10 +194,9 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        {data?.observaciones && (
-                            <Label className="text-red-500">{data.observaciones} </Label>
-                        ) }
-                        <div className="flex gap-2">
+                        
+                        <div className="flex gap-3">
+
                         <FormField
                                 control={form.control}
                                 name="emision"
@@ -227,6 +225,31 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     </FormItem>
                                 )}
                             />
+                         <FormField
+                                    control={form.control}
+                                    name="estado"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormLabel>Estado:</FormLabel>
+                                            <FormControl>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Seleccionar Nivel de Impacto" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Ingresado">Ingresado</SelectItem>
+                                                    <SelectItem value="Pendiente">Pendiente</SelectItem>
+                                                    {/* <SelectItem value="PendienteArea">Pendiente Area</SelectItem> */}
+                                                    <SelectItem value="Cerrado">Cerrado</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            </FormControl>
+                                            <FormMessage className="text-red-500 text-sm" />
+                                        </FormItem>
+                                    )}
+                                />
                         </div>
                             <div className="flex gap-2">
                                 <FormField

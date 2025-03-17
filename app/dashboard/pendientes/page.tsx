@@ -1,4 +1,5 @@
 "use client"
+import { AssignForm } from "@/components/Asignar-form";
 import { PendingForm } from "@/components/Pendiente-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useClosePendingCardMutation, useGetCardsPending } from "@/lib/queries/cards.queries";
 import { useAuthStore } from "@/store/auth.store";
-import { FolderDown, MoreHorizontal, Pencil, RefreshCcw } from "lucide-react";
+import { FolderDown, MailOpen, MessageSquareOff, MoreHorizontal, Pencil, PlusSquare, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 
 const ITEMS_PER_PAGE = 8;
@@ -19,6 +20,7 @@ export default function Page() {
   const [debounceTerm, setDebounceTerm] = useState('')
   const [searchBy, setSearchBy] = useState<string[]>(['codigoRecibido', 'destinatario', 'asunto']); // Campos de búsqueda
   const [openEdit, setOpenEdit] = useState(false);
+  const [openNew, setOpenNew] = useState(false);
   const [select, setSelect] = useState('');
 
   const { user } = useAuthStore()
@@ -100,9 +102,15 @@ export default function Page() {
             Pendientes
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <Button onClick={() => { refetch() }}>
-              <RefreshCcw />
-            </Button>
+          <div className="flex">
+                            <Button onClick={() => refetch()}>
+                                <RefreshCcw />
+                            </Button>
+                            { subAreaId === 0  &&<Button onClick={() => { setSelect('');  setOpenNew(true)}}>
+                                <PlusSquare />
+                                Crear Carta
+                            </Button>}
+                        </div>
             <div className="flex items-center gap-2">
               <span>Buscar:</span>
               <Input
@@ -210,13 +218,19 @@ export default function Page() {
                           Responder
                         </DropdownMenuItem>
                         {user?.rol?.nombre === 'admin' ? (<DropdownMenuItem
+                          className="text-green-600"
+                          onClick={() => { setOpenNew(true); setSelect(card.id) }}
+                        >
+                          <MailOpen className="mr-2 h-4 w-4" />
+                          Editar carta
+                        </DropdownMenuItem>): null}
+                        {user?.rol?.nombre === 'admin' ? (<DropdownMenuItem
                           className="text-red-600"
                           onClick={() => { handleCloseCard(card.id) }}
                         >
-                          <Pencil className="mr-2 h-4 w-4" />
+                          <MessageSquareOff className="mr-2 h-4 w-4" />
                           Cerrar carta
                         </DropdownMenuItem>): null}
-
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -273,6 +287,11 @@ export default function Page() {
           open={openEdit}
           onOpenChange={setOpenEdit}
           id={select}
+        />
+        <AssignForm
+         open={openNew}
+         onOpenChange={setOpenNew}
+         id={select}
         />
       </div>
     </div>

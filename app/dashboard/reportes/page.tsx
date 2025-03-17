@@ -37,10 +37,10 @@ import {
 import { useGetCards } from "@/lib/queries/cards.queries"
 import { FileDown, FolderDown, MoreHorizontal, Pencil, Trash2, Search, History } from 'lucide-react'
 import * as XLSX from "xlsx"
-import { AssignForm } from "@/components/Asignar-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import TraceabilityDialog from "@/components/trazability-dialog"
 import { useAuthStore } from "@/store/auth.store"
+import { ReportForm } from "@/components/Report-form"
 
 const ITEMS_PER_PAGE = 8
 
@@ -118,13 +118,23 @@ export default function ReportTable() {
     
     const dataToExport = cards.map((card) => ({
       "Código Recibido": card.codigoRecibido,
-      "Destinatario": card.destinatario,
+      "De/Empresa": card.empresa?.nombre,
+      "Para/Destinatario": card.destinatario,
       "Asunto": card.asunto,
+      "Link de Archivo de Carta": card.pdfInfo,
       "Fecha Ingreso": card.fechaIngreso,
       "Estado": card.estado,
+      "Correos Copia": card.correosCopia.join(','),
+      "Tema": card.temaRelacion?.nombre,
+      "Area para Correo": card.areaResponsable?.nombre,
+      "Sub Area correspondiente": card.subArea?.nombre,
+      "Fecha de Envio de correo al Area": card.fechaEnvio,
       "Devuelto": card.devuelto ? "SI" : "NO",
+      "Comentario de Respuesta": card.comentario,
+      "Archivo de Respuesta": card.cartaborrador,
+      "Observaciones de Respuesta": card.observaciones,
       "Código Carta Anterior": card.cartaAnterior?.codigoRecibido || "",
-      "Asunto Carta Anterior": card.cartaAnterior?.asunto || ""
+      
     }))
     
     const ws = XLSX.utils.json_to_sheet(dataToExport)
@@ -436,7 +446,7 @@ export default function ReportTable() {
       </CardContent>
 
       {/* Edit Modal */}
-      <AssignForm
+      <ReportForm
         open={openEdit}
         onOpenChange={setOpenEdit}
         id={selectedCardId}

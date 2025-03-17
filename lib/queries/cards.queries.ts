@@ -69,7 +69,7 @@ export const useCreateReceivedCardMutation = (
   return {
       AlertDialog, // Exportar el componente para renderizarlo en tu aplicación
       mutation: useMutation({
-          mutationFn: (data: { pdfInfo: File } & Omit<CreateCardDto, "pdfInfo">) =>
+          mutationFn: (data: { pdfInfo?: File } & Omit<CreateCardDto, "pdfInfo">) =>
               createReceivedCard(data),
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cards"] });
@@ -106,7 +106,7 @@ export const useUpdateReceivedCardMutation = (
   return {
       AlertDialog, // Exportar el componente para renderizarlo en tu aplicación
       mutation: useMutation({
-          mutationFn: (data: { pdfInfo: File } & {id : string} & Omit<CreateCardDto, "pdfInfo">) =>
+          mutationFn: (data: { pdfInfo?: File } & {id : string} & Omit<CreateCardDto, "pdfInfo">) =>
               updateReceivedCard(data),
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["cards"] });
