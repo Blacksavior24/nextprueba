@@ -110,7 +110,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
         if (!open) {
             form.reset({
                 emision: false,
-                partida: false,
+                partida: false,//
                 codigoRecibido: "",
                 fechaIngreso: new Date(),
                 destinatario: "",
@@ -384,7 +384,12 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                 render={({field}) => (
                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                         <FormControl>
-                                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                            <Switch 
+                                                checked={field.value} 
+                                                onCheckedChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    form.resetField('referencia')
+                                                    }} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
                                             <FormLabel>{field.value? 'Respondido':'Recibido'}</FormLabel>
