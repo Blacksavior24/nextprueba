@@ -224,19 +224,19 @@ export default function Page() {
                   onChange={(e) => setNewSubArea({ ...newSubArea, nombre: e.target.value })}
                 />
               </div>
-              <div className='grid gap-2'>
-                <Label htmlFor='procedencia'>Procedencia</Label>
-                <Input
-                  id='procedencia'
-                  value={newSubArea.procedencia}
-                  onChange={(e) => setNewSubArea({ ...newSubArea, procedencia: e.target.value })}
-                />
-              </div>
               <div className="grid gap-2">
                 <Label htmlFor="area">Area</Label>
                 <Select
                   value={newSubArea.areaResponsableId}
-                  onValueChange={(value) => setNewSubArea({ ...newSubArea, areaResponsableId: value })}
+                  onValueChange={(value) => {
+                    const areaSeleccionada = areas.find(area=> String(area.id) === value)
+                    setNewSubArea({ 
+                      ...newSubArea, 
+                      areaResponsableId: value,
+                      procedencia: areaSeleccionada?.procedencia
+                    })
+                  }
+                  }
                 >
                   <SelectTrigger id="area">
                     <SelectValue placeholder="Seleccione un Area" />
@@ -249,6 +249,15 @@ export default function Page() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className='grid gap-2'>
+                <Label htmlFor='procedencia'>Procedencia</Label>
+                <Input
+                  id='procedencia'
+                  value={newSubArea.procedencia}
+                  onChange={(e) => setNewSubArea({ ...newSubArea, procedencia: e.target.value })}
+                  readOnly
+                />
               </div>
               <div className='grid gap-2'>
                 <Label htmlFor='jefatura'>Jefatura</Label>

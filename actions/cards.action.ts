@@ -295,6 +295,22 @@ export const getCardsEmitidos = async () => {
   }
 }
 
+export const getStats = async (userId: string) => {
+  try {
+    const response = await formsApi.get(`cards/stats/${userId}`)
+
+    return response.data
+
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error((error as Error).message)
+    } 
+  }
+}
+
+
 export const getCardsPending = async (
   subAreaId: number,
   page: number = 1, 

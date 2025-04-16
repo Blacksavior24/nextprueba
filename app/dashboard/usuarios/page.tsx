@@ -210,11 +210,11 @@ export default function Page() {
           <TableHeader className='bg-zinc-500/30'>
             <TableRow>
               <TableHead className='font-semibold'>Nombre</TableHead>
+              <TableHead className='font-semibold'>Apellidos</TableHead>
               <TableHead className='font-semibold'>Email</TableHead>
-              <TableHead className='font-semibold'>Rol</TableHead>
+              <TableHead className='font-semibold'>Tipo de Usuario</TableHead>
               <TableHead className='font-semibold'>Area</TableHead>
               <TableHead className='font-semibold'>Sub-Area</TableHead>
-              <TableHead className='font-semibold'>Tipo de Usuario</TableHead>
               <TableHead className='font-semibold'>Jefatura</TableHead>
               <TableHead className="text-right font-semibolds">Acciones</TableHead>
             </TableRow>
@@ -239,11 +239,11 @@ export default function Page() {
               users.map((usuario) => (
                 <TableRow key={usuario.id}>
                   <TableCell>{usuario.nombre}</TableCell>
+                  <TableCell>{usuario.apellidos}</TableCell>
                   <TableCell>{usuario.email}</TableCell>
-                  <TableCell>{usuario.rol?.nombre}</TableCell>
+                  <TableCell>{usuario.rol?.nombre.toUpperCase()}</TableCell>
                   <TableCell>{usuario.area?.nombre}</TableCell>
                   <TableCell>{usuario.subArea?.nombre}</TableCell>
-                  <TableCell>{usuario.tipoUsuario}</TableCell>
                   <TableCell>{usuario.jefe}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -295,6 +295,14 @@ export default function Page() {
                   id="nombre"
                   value={newUsuario.nombre}
                   onChange={(e) => setNewUsuario({ ...newUsuario, nombre: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="apellidos">Apellidos</Label>
+                <Input
+                  id="apellidos"
+                  value={newUsuario.apellidos}
+                  onChange={(e) => setNewUsuario({ ...newUsuario, apellidos: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
@@ -356,36 +364,24 @@ export default function Page() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="rol">Rol</Label>
-                <Select value={newUsuario.rolId} onValueChange={(value) => setNewUsuario({ ...newUsuario, rolId: value })}>
+                <Select 
+                  value={newUsuario.rolId} 
+                  onValueChange={(value) => 
+                    setNewUsuario({ 
+                      ...newUsuario, 
+                      rolId: value 
+                      })
+                    }
+                  >
                   <SelectTrigger id="rol">
                     <SelectValue placeholder="Seleccione un rol" />
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map((rol) => (
                       <SelectItem key={rol.id} value={String(rol.id)}>
-                        {rol.nombre}
+                        {rol.nombre.toLocaleUpperCase()}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="tipoUsuario">Tipo de Usuario</Label>
-                <Select
-                  value={newUsuario.tipoUsuario}
-                  onValueChange={(value) =>
-                    setNewUsuario({
-                      ...newUsuario,
-                      tipoUsuario: value as "admin" | "user",
-                    })
-                  }
-                >
-                  <SelectTrigger id="tipoUsuario">
-                    <SelectValue placeholder="Seleccione tipo de usuario" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuario</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

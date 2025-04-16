@@ -1,20 +1,21 @@
-import {create} from 'zustand';
-import axios from 'axios';
+import { create } from 'zustand';
+import { AxiosError } from 'axios';
 import { Empresa } from '@/interfaces/empresas.interfaces';
+import { formsApi } from '@/lib/axios';
 
 // Definir el estado del store
 interface EmpresasState {
     empresas: Empresa[];
     loading: boolean;
     error: string | null;
-    isUpdating: boolean; // Nuevo estado para manejar la carga durante la actualización
+    isUpdating: boolean;
     fetchEmpresas: () => Promise<void>;
-    createEmpresa: (rol: CreateEmpresaDto) => Promise<void>;
-    updateEmpresa: (id: number, rol: CreateEmpresaDto) => Promise<void>;
+    createEmpresa: (empresa: CreateEmpresaDto) => Promise<void>;
+    updateEmpresa: (id: number, empresa: CreateEmpresaDto) => Promise<void>;
     deleteEmpresa: (id: number) => Promise<void>;
 }
 
-// Definir el DTO para crear un rol (debe coincidir con el DTO en NestJS)
+// Definir el DTO para crear una empresa
 interface CreateEmpresaDto {
     nombre: string;
 }
@@ -25,57 +26,72 @@ const useEmpresasStore = create<EmpresasState>()((set, get) => ({
     loading: false,
     error: null,
     isUpdating: false,
-    // Acción para obtener todos los Empresas
+
+    // Acción para obtener todas las empresas
     fetchEmpresas: async () => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get<Empresa[]>('http://localhost:3003/api/v1/company');
+            const response = await formsApi.get<Empresa[]>('company');
             set({ empresas: response.data, loading: false });
         } catch (error) {
-            set({ error: 'Error fetching empresas', loading: false });
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });
+            } else {
+                set({ error: (error as Error).message, loading: false });
+            }
         }
     },
 
-    // Acción para crear un nuevo rol
-    createEmpresa: async (rol: CreateEmpresaDto) => {
+    // Acción para crear una nueva empresa
+    createEmpresa: async (empresa: CreateEmpresaDto) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post<Empresa>('http://localhost:3003/api/v1/company', rol);
+            const response = await formsApi.post<Empresa>('company', empresa);
             set((state) => ({ empresas: [...state.empresas, response.data], loading: false }));
         } catch (error) {
-            set({ error: 'Error creating role', loading: false });
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });
+            } else {
+                set({ error: (error as Error).message, loading: false });
+            }
         }
     },
 
-    // Acción para actualizar un rol existente
-    updateEmpresa: async (id, rol) => {
-        set({ isUpdating: true, error: null }); // Activar el estado de actualización
+    // Acción para actualizar una empresa existente
+    updateEmpresa: async (id, empresa) => {
+        set({ isUpdating: true, error: null });
         try {
-          const response = await axios.patch<Empresa>(`http://localhost:3003/api/v1/company/${id}`, rol);
-          set((state) => {
-            const updatedEmpresas = state.empresas.map((r) =>
-              r.id === id ? { ...r, ...response.data } : r
-            );
-            
-            return { empresas: updatedEmpresas, isUpdating: false }; // Desactivar el estado de actualización
-          });
+            const response = await formsApi.patch<Empresa>(`company/${id}`, empresa);
+            set((state) => {
+                const updatedEmpresas = state.empresas.map((e) =>
+                    e.id === id ? { ...e, ...response.data } : e
+                );
+                return { empresas: updatedEmpresas, isUpdating: false };
+            });
         } catch (error) {
-          set({ error: 'Error updating role', isUpdating: false });
-          console.error('Error updating role:', error);
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, isUpdating: false });
+            } else {
+                set({ error: (error as Error).message, isUpdating: false });
+            }
         }
-      },
+    },
 
-    // Acción para eliminar un rol
+    // Acción para eliminar una empresa
     deleteEmpresa: async (id: number) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`http://localhost:3003/api/v1/company/${id}`);
+            await formsApi.delete(`company/${id}`);
             set((state) => ({
-                empresas: state.empresas.filter((r) => r.id !== id),
+                empresas: state.empresas.filter((e) => e.id !== id),
                 loading: false,
             }));
         } catch (error) {
-            set({ error: 'Error deleting role', loading: false });
+            if (error instanceof AxiosError && error.response) {
+                set({ error: error.response.data.message, loading: false });
+            } else {
+                set({ error: (error as Error).message, loading: false });
+            }
         }
     },
 }));

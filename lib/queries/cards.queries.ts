@@ -1,4 +1,4 @@
-import { answerCardPending, closeCardPending, createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos, getCardsPending, updateReceivedCard } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
+import { answerCardPending, closeCardPending, createReceivedCard, getCardById, getCardByIdTraza, getCards, getCardsEmitidos, getCardsPending, getStats, updateReceivedCard } from "@/actions/cards.action" // Asumiendo que el archivo es servicios/cartas
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardsResponse, CreateCardDto, PendingCardDto } from "@/interfaces/cartas.interfaces"
 import { useAlertDialog } from "@/components/AlertDialog"
@@ -14,6 +14,16 @@ export const useGetCards = (
         queryKey: ["cards", page, limit, filters, search, searchBy],
         queryFn: ()=>getCards(page, limit, filters, search,searchBy),
         staleTime: 1000*10*10,
+    })
+}
+
+export const useGetStats = (
+    userId: string
+) => {
+    return useQuery({
+        queryKey: ['stats', userId],
+        queryFn: ()=> getStats(userId),
+        enabled: !!userId
     })
 }
 

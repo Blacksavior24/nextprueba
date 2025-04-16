@@ -8,12 +8,13 @@ import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function Page(){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-  
+    const {setTheme, theme} = useTheme()
     const {login, isLoading, error, token} = useAuthStore();
   
     const router = useRouter()
@@ -30,7 +31,10 @@ export default function Page(){
       }
     }, [token, router]);
   
-  
+    const handleChangeTheme = () => {
+      setTheme(theme === "light" ? "dark" : "light")
+      
+    }
   
     return (
       <div 
@@ -47,6 +51,13 @@ export default function Page(){
           <CardDescription className="text-center text-gray-500">Ingresa tus credenciales para acceder</CardDescription>
         </CardHeader>
         <CardContent>
+          <Button
+            variant='ghost'
+            onClick={handleChangeTheme}
+          >
+          {theme === "light" ? <Moon /> : <Sun />} {/* Cambiar ícono */}
+          {theme === "light" ? "Dark Mode" : "Light Mode"} 
+          </Button>
         <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <Label htmlFor="email">Correo electrónico</Label>

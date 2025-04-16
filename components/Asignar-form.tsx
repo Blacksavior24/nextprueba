@@ -27,9 +27,10 @@ import { useGetEmpresas } from "@/lib/queries/companies.queries"
 import { useGetAreas } from "@/lib/queries/areas.queries"
 import { useGetSubAreas } from "@/lib/queries/subareas.queries"
 import { DragAndDropInput } from "./drag-and-drop-input"
-import { MultiEmailInput } from "./multi-email-input"
 import { useQueryClient } from "@tanstack/react-query"
 import { Label } from "./ui/label"
+import { MultiEmailInputApi } from "./multi-email-input-api"
+import { EnterpriseDialog } from "./enterprise-dialog"
 
 interface DialogProps {
     open: boolean
@@ -42,6 +43,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     const [openPopover, setOpenPopover] = useState(false);
     const [openPopoverOne, setOpenPopoverOne] = useState(false);
     const [recipientDialogOpen, setRecipientDialogOpen] = useState(false)
+    const [enterpriseDialogOpen, setEnterpriseDialogOpen] = useState(false)
     const {data: destinatarios, isLoading: isLoadingDestinatario} = useGetReceiver()
     const { data: temas, isLoading: isLoadingTemas } = useGetTemas()
     const { data: empresas, isLoading: isLoadingEmpresa } = useGetEmpresas()
@@ -219,7 +221,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                 render={({field}) => (
                                     <FormItem className="flex-1">
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>{field.value? 'Partida':'Carta'}</FormLabel>
+                                            <FormLabel>{field.value? 'Asiento':'Carta'}</FormLabel>
                                         </div>
                                         <FormControl>
                                             <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -279,28 +281,38 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     )}
                                 />
                             </div>
+                            <div className="flex gap-2">
                             <FormField
                                     control={form.control}
                                     name="empresaId"
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
                                             <FormLabel>De / Empresa:</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Seleccionar Empresa" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {empresas && empresas.map(empresa => (
-                                                        <SelectItem value={String(empresa.id)} key={empresa.id}>{empresa.nombre}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <SearchableSelect
+                                                options={empresas?.map((empresa)=> ({
+                                                    value: String(empresa.id),
+                                                    label: empresa.nombre
+                                                }))}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Seleccionar Empresa"
+                                            />
+                                            
                                             <FormMessage className="text-red-500 text-sm" />
                                         </FormItem>
                                     )}
                                 />
+                            <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="mt-8"
+                                    onClick={() => setEnterpriseDialogOpen(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            
                             <div className="flex gap-2">
                                 <FormField
                                     control={form.control}
@@ -308,21 +320,16 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
                                             <FormLabel>Para / Destinatario:</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="--Seleccionar--" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="default">--Seleccionar--</SelectItem>
-                                                    {destinatarios?.map((recipient) => (
-                                                        <SelectItem key={recipient.id} value={recipient.nombre}>
-                                                            {recipient.nombre}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <SearchableSelect
+                                                options={destinatarios?.map((dest)=>({
+                                                    value: String(dest.id),
+                                                    label: dest.nombre
+                                                }))}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Seleccionar Destinatariro"
+                                            />
+                                           
                                             <FormMessage className="text-red-500 text-sm" />
                                         </FormItem>
                                     )}
@@ -534,7 +541,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     </FormItem>
                                 )}
                             /> */}
-                            <MultiEmailInput
+                            <MultiEmailInputApi
                                 form={form}
                                 name="correosCopia"
                                 label="Correos de copia:"
@@ -547,7 +554,13 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                             <FormControl>
-                                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                                <Checkbox 
+                                                    checked={field.value} 
+                                                    onCheckedChange={(checked)=> {
+                                                        field.onChange(checked);
+                                                        form.resetField('fechadevencimiento')
+                                                    }} 
+                                                    />
                                             </FormControl>
                                             <FormLabel>Vencimiento</FormLabel>
                                         </FormItem>
@@ -619,7 +632,11 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                 )}
                             />
                             <div className="flex justify-center">
-                                <Button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white">
+                                <Button 
+                                    type="submit" 
+                                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                                    disabled={CreateReceivedMutation.isPending || UpdateReceiveMutation.isPending}
+                                >
                                     Enviar
                                 </Button>
                             </div>
@@ -627,6 +644,10 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                         <RecipientDialog
                             open={recipientDialogOpen}
                             onOpenChange={setRecipientDialogOpen}
+                        />
+                        <EnterpriseDialog
+                            open={enterpriseDialogOpen}
+                            onOpenChange={setEnterpriseDialogOpen}
                         />
                     </Form>
 

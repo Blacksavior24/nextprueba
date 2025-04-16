@@ -4,31 +4,29 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useCreateReceiver } from "@/lib/queries/receivers.queries"
+import { useCreateEmpresa } from "@/lib/queries/companies.queries"
 
-interface RecipientDialogProps {
+
+interface EnterpriseDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
+export function EnterpriseDialog({ open, onOpenChange }: EnterpriseDialogProps) {
 
-  const {mutation} = useCreateReceiver()
+
+  const {mutation} = useCreateEmpresa()
 
   const [formData, setFormData] = useState({
-    tipodoc: "",
-    numdoc: "",
     nombre: "",
   })
 
   const handleSubmit = async() => {
-    await mutation.mutate(formData)
+    mutation.mutate(formData)
+    
     if (!mutation.error) {
     setFormData({
-      tipodoc: '',
-      nombre: '',
-      numdoc: ''
+      nombre: ''
     })
     }
   }
@@ -38,32 +36,12 @@ export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Administración de Destinatario</DialogTitle>
+          <DialogTitle>Administración de Empresas / De</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           
         </DialogDescription>
         <div className="grid gap-4 py-4" >
-          <div className="grid gap-2">
-            <Select value={formData.tipodoc} onValueChange={(value) => setFormData({ ...formData, tipodoc: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="--Seleccionar--" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">--Seleccionar--</SelectItem>
-                <SelectItem value="DNI">DNI</SelectItem>
-                <SelectItem value="RUC">RUC</SelectItem>
-                <SelectItem value="SIN_DOCUMENTO">SIN DOCUMENTO</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Input
-              placeholder="Numero Documento"
-              value={formData.numdoc}
-              onChange={(e) => setFormData({ ...formData, numdoc: e.target.value })}
-            />
-          </div>
           <div className="grid gap-2">
             <Input
               placeholder="Nombre"
@@ -87,6 +65,7 @@ export function RecipientDialog({ open, onOpenChange }: RecipientDialogProps) {
             Guardar
           </Button>
         </div>
+        
       </DialogContent>
     </Dialog>
   )
