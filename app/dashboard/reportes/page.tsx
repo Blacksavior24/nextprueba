@@ -269,13 +269,13 @@ export default function ReportTable() {
               </TableRow>
               <TableRow className="bg-muted/50">
                 <TableHead className="font-bold">Código</TableHead>
+                <TableHead className="font-bold">Emitida/Recibida</TableHead>
                 <TableHead className="font-bold">Destinatario</TableHead>
                 <TableHead className="font-bold">Asunto</TableHead>
                 <TableHead className="font-bold">Fecha</TableHead>
                 <TableHead className="font-bold">PDF</TableHead>
-                <TableHead className="font-bold">Devuelto</TableHead>
                 <TableHead className="font-bold">Estado</TableHead>
-                <TableHead className="font-bold">Código Anterior</TableHead>
+                <TableHead className="font-bold">Referencia</TableHead>
                 <TableHead className="font-bold">Trazabilidad</TableHead>
                 <TableHead className="text-right font-bold">Acciones</TableHead>
               </TableRow>
@@ -306,6 +306,11 @@ export default function ReportTable() {
                 cards.map((card) => (
                   <TableRow key={card.id} className="hover:bg-muted/30">
                     <TableCell className="font-medium">{card.codigoRecibido}</TableCell>
+                    <TableCell className="font-medium">
+                      <Badge className={`${card.emision?'bg-green-100 text-green-800 border-green-300':'bg-yellow-100 text-yellow-800 border-yellow-300'}`}>
+                        {card.emision?'Emitido':'Recibido'}
+                        </Badge>
+                      </TableCell>
                     <TableCell>{card.destinatario}</TableCell>
                     <TableCell className="max-w-[200px] truncate" title={card.asunto}>
                       {card.asunto}
@@ -325,11 +330,6 @@ export default function ReportTable() {
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={card.devuelto ? "default" : "secondary"}>
-                        {card.devuelto ? "SI" : "NO"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <Badge className={`${getStatusColor(card.estado)} px-2 py-1 rounded-full text-xs font-semibold`}>
                         {card.estado}
                       </Badge>
@@ -344,7 +344,7 @@ export default function ReportTable() {
                           onClick={() => handleTraza(card.id)}
                         >
                           <History className="h-4 w-4" />
-                          <span className="text-xs">Observar</span>
+                          <span className="text-xs">Ver más</span>
                         </Button>
                       </div>
                     </TableCell>

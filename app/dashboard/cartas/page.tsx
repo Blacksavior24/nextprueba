@@ -117,12 +117,11 @@ export default function Page() {
                 <Table>
                     <TableHeader className="bg-zinc-500/30">
                         <TableRow>
-                            <TableHead className="font-semibold">Código Recibido</TableHead>
+                            <TableHead className="font-semibold">Código</TableHead>
                             <TableHead className="font-semibold">Destinatario</TableHead>
                             <TableHead className="font-semibold">Asunto Recibido</TableHead>
                             <TableHead className="font-semibold">Fecha Ingreso</TableHead>
                             <TableHead className="font-semibold">Carta Recibida</TableHead>
-                            <TableHead className="font-semibold">Devuelto</TableHead>
                             <TableHead className="font-semibold">Estado</TableHead>
                             <TableHead className="text-right font-semibold">Acciones</TableHead>
                         </TableRow>
@@ -161,11 +160,6 @@ export default function Page() {
                                                 Ver Pdf
                                             </a>
                                         </Button>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={card.devuelto ? "default" : "secondary"}>
-                                            {card.devuelto ? "SI" : "NO"}
-                                        </Badge>
                                     </TableCell>
                                     <TableCell>
                                         <Badge className={`${getStatusColor(card.estado)} px-2 py-1 rounded-full text-xs font-semibold`}>

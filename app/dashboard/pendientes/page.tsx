@@ -106,10 +106,7 @@ export default function Page() {
                             <Button onClick={() => refetch()}>
                                 <RefreshCcw />
                             </Button>
-                            { subAreaId === 0  &&<Button onClick={() => { setSelect('');  setOpenNew(true)}}>
-                                <PlusSquare />
-                                Crear Carta
-                            </Button>}
+                            
                         </div>
             <div className="flex items-center gap-2">
               <span>Buscar:</span>
@@ -147,7 +144,7 @@ export default function Page() {
         <Table>
           <TableHeader className="bg-zinc-500/30">
             <TableRow>
-              <TableHead className="font-semibold">Código Recibido</TableHead>
+              <TableHead className="font-semibold">Código</TableHead>
               <TableHead className="font-semibold">Fecha Ingreso</TableHead>
               <TableHead className="font-semibold">De</TableHead>
               <TableHead className="font-semibold">Para/Destinatario</TableHead>

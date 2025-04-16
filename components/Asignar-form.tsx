@@ -31,6 +31,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Label } from "./ui/label"
 import { MultiEmailInputApi } from "./multi-email-input-api"
 import { EnterpriseDialog } from "./enterprise-dialog"
+import { TemaDialog } from "./tema-dialog"
 
 interface DialogProps {
     open: boolean
@@ -44,6 +45,7 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
     const [openPopoverOne, setOpenPopoverOne] = useState(false);
     const [recipientDialogOpen, setRecipientDialogOpen] = useState(false)
     const [enterpriseDialogOpen, setEnterpriseDialogOpen] = useState(false)
+    const [temaDialogOpen, setTemaDialogOpen] = useState(false)
     const {data: destinatarios, isLoading: isLoadingDestinatario} = useGetReceiver()
     const { data: temas, isLoading: isLoadingTemas } = useGetTemas()
     const { data: empresas, isLoading: isLoadingEmpresa } = useGetEmpresas()
@@ -502,6 +504,15 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                                     </FormItem>
                                 )}
                             />
+                            <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="mt-8"
+                                    onClick={() => setTemaDialogOpen(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                                 <FormField
                                     control={form.control}
                                     name="nivelImpacto"
@@ -648,6 +659,10 @@ export function AssignForm({ open, onOpenChange, id }: DialogProps) {
                         <EnterpriseDialog
                             open={enterpriseDialogOpen}
                             onOpenChange={setEnterpriseDialogOpen}
+                        />
+                        <TemaDialog
+                            open={temaDialogOpen}
+                            onOpenChange={setTemaDialogOpen}
                         />
                     </Form>
 
